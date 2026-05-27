@@ -84,6 +84,16 @@ export default function ResultPage() {
           <div className="flex justify-center gap-3 flex-wrap">
             <Pill label={`${result.seasonFamily} family`} color={familyAccent} />
             <Pill label={`${undertoneLabel} undertone`} color={familyAccent} />
+            {result.aggregation && (
+              <Pill
+                label={
+                  result.aggregation.agreement === 1
+                    ? `Confirmed by ${result.aggregation.inputCount} photos`
+                    : `${result.aggregation.inputCount}-photo aggregate`
+                }
+                color={familyAccent}
+              />
+            )}
           </div>
         </section>
 

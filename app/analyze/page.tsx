@@ -9,8 +9,18 @@ import { AdjustablePreview, type AdjustablePreviewHandle } from "@/components/Ad
 import { Upload, Camera, X, AlertCircle, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { analyzeImageQuality, type QualityReport } from "@/lib/image-quality";
+import { voteResults } from "@/lib/vote-results";
+import type { ColourResult } from "@/lib/types";
 
-type Stage = "upload" | "analysing" | "error";
+type Stage =
+  | "upload"
+  | "analysing"
+  | "low_confidence"
+  | "collecting_extra"
+  | "analysing_extra"
+  | "error";
+
+const HIGH_CONFIDENCE_THRESHOLD = 0.7;
 
 export default function AnalyzePage() {
   const router = useRouter();
@@ -27,6 +37,12 @@ export default function AnalyzePage() {
   const [quality, setQuality] = useState<QualityReport | null>(null);
   const [checking, setChecking] = useState(false);
   const [ignoreWarning, setIgnoreWarning] = useState(false);
+  // Multi-photo aggregation state
+  const [firstResult, setFirstResult] = useState<ColourResult | null>(null);
+  const [extraPhotos, setExtraPhotos] = useState<string[]>([]); // dataURLs of photos 2 and 3
+  const extraFileInputRef = useRef<HTMLInputElement>(null);
+  const extraCameraInputRef = useRef<HTMLInputElement>(null);
+  const [showExtraCamera, setShowExtraCamera] = useState(false);
 
   // Desktop "Take a photo" opens the webcam modal; mobile uses the native
   // input[capture] which triggers the system camera app instead.
@@ -168,8 +184,65 @@ export default function AnalyzePage() {
         const err = await res.json();
         throw new Error(err.error ?? "Analysis failed");
       }
-      const result = await res.json();
-      sessionStorage.setItem("chromatique_result", JSON.stringify(result));
+      const result: ColourResult = await res.json();
+      setFirstResult(result);
+
+      if (result.confidence >= HIGH_CONFIDENCE_THRESHOLD) {
+        // Confident enough — ship directly
+        sessionStorage.setItem("chromatique_result", JSON.stringify(result));
+        router.push("/result");
+      } else {
+        // Low confidence — offer to take 2 more photos for aggregation
+        setStage("low_confidence");
+      }
+    } catch (err) {
+      clearInterval(stepInterval);
+      setErrorMsg(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      setStage("error");
+    }
+  };
+
+  /** Submit photos 2 + 3 in parallel, vote across all 3, route to result. */
+  const finalAnalyseMulti = async () => {
+    if (!firstResult || extraPhotos.length !== 2) return;
+    setStage("analysing_extra");
+    setAnalysisStep(0);
+    const stepInterval = setInterval(() => {
+      setAnalysisStep((s) => Math.min(s + 1, STEPS.length - 1));
+    }, 1800);
+
+    try {
+      const analyseDataUrl = async (dataUrl: string): Promise<ColourResult> => {
+        const [, rest] = dataUrl.split(",");
+        const mediaType = dataUrl.split(";")[0].split(":")[1];
+        const res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageBase64: rest, mediaType }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error ?? "Analysis failed");
+        }
+        return res.json();
+      };
+
+      const [r2, r3] = await Promise.all([
+        analyseDataUrl(extraPhotos[0]),
+        analyseDataUrl(extraPhotos[1]),
+      ]);
+
+      clearInterval(stepInterval);
+      const voted = voteResults([firstResult, r2, r3]);
+      // Persist agreement metadata too (result page can display "confirmed by 3 photos")
+      const enriched = {
+        ...voted.result,
+        aggregation: {
+          inputCount: voted.inputCount,
+          agreement: voted.agreement,
+        },
+      };
+      sessionStorage.setItem("chromatique_result", JSON.stringify(enriched));
       router.push("/result");
     } catch (err) {
       clearInterval(stepInterval);
@@ -178,22 +251,225 @@ export default function AnalyzePage() {
     }
   };
 
-  if (stage === "analysing") {
+  /** Handle extra-photo file selection — resize + push into extraPhotos. */
+  const handleExtraFile = useCallback(async (file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > 25 * 1024 * 1024) return;
+    try {
+      const resized = await resizeImage(file);
+      setExtraPhotos((prev) => (prev.length < 2 ? [...prev, resized] : prev));
+    } catch {
+      // Quietly skip — user can try again
+    }
+  }, []);
+
+  const onExtraInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleExtraFile(file);
+    e.target.value = ""; // allow re-selecting the same file
+  };
+
+  /** Keep first photo, discard low-confidence aggregation, ship the result. */
+  const useFirstAnyway = () => {
+    if (!firstResult) return;
+    sessionStorage.setItem("chromatique_result", JSON.stringify(firstResult));
+    router.push("/result");
+  };
+
+  if (stage === "analysing" || stage === "analysing_extra") {
     return (
       <div className="min-h-screen flex flex-col bg-[var(--c-bg)]">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-20 text-center">
           <AnalysingAnimation />
           <p className="font-display text-2xl font-semibold text-[var(--c-ink)] mt-8 mb-3">
-            Analysing your colours…
+            {stage === "analysing_extra" ? "Cross-checking 3 photos…" : "Analysing your colours…"}
           </p>
           <p className="text-sm text-[var(--c-ink-soft)] h-5 transition-all duration-500">
             {STEPS[analysisStep]}
           </p>
           <p className="mt-6 text-xs text-[var(--c-ink-soft)]/60 max-w-xs">
-            Your photo is processed securely and discarded immediately after analysis.
+            Your photos are processed securely and discarded immediately after analysis.
           </p>
         </div>
+      </div>
+    );
+  }
+
+  // Low-confidence first result — offer to take 2 more photos
+  if (stage === "low_confidence" && firstResult && preview) {
+    const confPct = Math.round(firstResult.confidence * 100);
+    return (
+      <div className="min-h-screen flex flex-col bg-[var(--c-bg)]">
+        <Navbar />
+        <main className="flex-1 max-w-lg mx-auto w-full px-6 py-12">
+          <div className="text-center mb-8">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--c-accent)] mb-3">
+              Best guess so far
+            </p>
+            <h1 className="font-display text-3xl sm:text-4xl font-bold text-[var(--c-ink)] mb-2">
+              {firstResult.season}
+            </h1>
+            <p className="text-sm text-[var(--c-ink-soft)]">
+              {confPct}% confident. Try 2 more photos for a definitive read.
+            </p>
+          </div>
+
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={preview}
+            alt="Your first selfie"
+            className="w-32 h-32 object-cover rounded-2xl mx-auto mb-8 border border-[var(--c-line)]"
+          />
+
+          <Button
+            onClick={() => {
+              setExtraPhotos([]);
+              setStage("collecting_extra");
+            }}
+            size="lg"
+            className="w-full mb-3"
+          >
+            Take 2 more photos →
+          </Button>
+          <Button
+            onClick={useFirstAnyway}
+            variant="secondary"
+            size="md"
+            className="w-full"
+          >
+            Use this result anyway
+          </Button>
+
+          <p className="mt-6 text-center text-xs text-[var(--c-ink-soft)]/70">
+            Different angles &amp; lighting help us cross-check the season.
+            Best with varied photos (e.g. by a window + a different room).
+          </p>
+        </main>
+      </div>
+    );
+  }
+
+  // Collecting extra photos (slots 2 + 3)
+  if (stage === "collecting_extra" && firstResult && preview) {
+    const slots = [preview, extraPhotos[0] ?? null, extraPhotos[1] ?? null];
+    const ready = extraPhotos.length === 2;
+    return (
+      <div className="min-h-screen flex flex-col bg-[var(--c-bg)]">
+        <Navbar />
+        <main className="flex-1 max-w-lg mx-auto w-full px-6 py-12">
+          <div className="text-center mb-8">
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-[var(--c-ink)] mb-2">
+              {ready ? "Ready to cross-check" : `Add ${2 - extraPhotos.length} more photo${extraPhotos.length === 1 ? "" : "s"}`}
+            </h1>
+            <p className="text-sm text-[var(--c-ink-soft)]">
+              {ready
+                ? "We'll analyse all 3 and return the consensus."
+                : "Try a different angle or lighting for each."}
+            </p>
+          </div>
+
+          {/* 3 slots */}
+          <div className="grid grid-cols-3 gap-3 mb-8">
+            {slots.map((src, idx) => (
+              <div
+                key={idx}
+                className={cn(
+                  "relative aspect-square rounded-2xl overflow-hidden border-2 border-dashed",
+                  src ? "border-transparent" : "border-[var(--c-line)] bg-[var(--c-sand)]/40 cursor-pointer hover:border-[var(--c-accent)]"
+                )}
+                onClick={() => {
+                  if (src || idx === 0) return;
+                  // Slot 2 or 3 — open file picker for extras
+                  if (isDesktop) {
+                    setShowExtraCamera(true);
+                  } else {
+                    extraFileInputRef.current?.click();
+                  }
+                }}
+              >
+                {src ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                    {idx > 0 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExtraPhotos((prev) => prev.filter((_, i) => i !== idx - 1));
+                        }}
+                        className="absolute top-1.5 right-1.5 bg-[var(--c-ink)]/70 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-[var(--c-ink)]"
+                        aria-label="Remove this photo"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--c-ink-soft)]">
+                    <Upload className="w-5 h-5 mb-1" />
+                    <span className="text-[10px] font-medium">Photo {idx + 1}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Hidden inputs for extra photos */}
+          <input
+            ref={extraFileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={onExtraInputChange}
+            className="sr-only"
+          />
+          <input
+            ref={extraCameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="user"
+            onChange={onExtraInputChange}
+            className="sr-only"
+          />
+
+          {/* Mobile: also offer camera */}
+          {!isDesktop && extraPhotos.length < 2 && (
+            <Button
+              onClick={() => extraCameraInputRef.current?.click()}
+              variant="secondary"
+              size="md"
+              className="w-full mb-3 gap-2"
+            >
+              <Camera className="w-4 h-4" />
+              Take a photo
+            </Button>
+          )}
+
+          <Button
+            onClick={finalAnalyseMulti}
+            size="lg"
+            className="w-full"
+            disabled={!ready}
+          >
+            {ready ? "Analyse all 3 photos →" : "Add more photos to continue"}
+          </Button>
+
+          <button
+            onClick={() => setStage("low_confidence")}
+            className="mt-4 w-full text-xs text-[var(--c-ink-soft)] underline"
+          >
+            ← Back
+          </button>
+
+          {/* Desktop webcam modal for extras */}
+          <CameraModal
+            open={showExtraCamera}
+            onClose={() => setShowExtraCamera(false)}
+            onCapture={(dataUrl) => {
+              setExtraPhotos((prev) => (prev.length < 2 ? [...prev, dataUrl] : prev));
+            }}
+          />
+        </main>
       </div>
     );
   }

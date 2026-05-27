@@ -16,4 +16,9 @@ export type ColourResult = {
   fabricNote: string;
   styleNote: string;
   confidence: number;
+  /** Present when result was aggregated from multiple photos. */
+  aggregation?: {
+    inputCount: number;
+    agreement: number; // 0-1
+  };
 };
