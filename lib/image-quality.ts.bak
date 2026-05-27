@@ -7,7 +7,7 @@
 //   warn  → allow analyse, show advisory chip ("Use anyway" implicit)
 //   ok    → proceed normally
 //
-// We deliberately avoid bundled ML face detection, instead we use a cheap
+// We deliberately avoid bundled ML face detection — instead we use a cheap
 // skin-tone heuristic that asks: "is there a concentration of warm mid-tones
 // in the central/upper region of the photo?" This catches the common bad
 // inputs (landscape, very small face, full-body) without false-rejecting
@@ -61,7 +61,7 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
   try {
     pixels = ctx.getImageData(0, 0, w, h).data;
   } catch {
-    // Cross-origin or other tainted-canvas error, skip checks
+    // Cross-origin or other tainted-canvas error — skip checks
     return { severity: "ok", issues: [], metrics: defaultMetrics() };
   }
 
@@ -119,7 +119,7 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
         highlightCount++;
       }
 
-      // Heuristic skin detection (works across tones, uses YCbCr-style bounds)
+      // Heuristic skin detection (works across tones — uses YCbCr-style bounds)
       // Convert to YCbCr
       const Y = 0.299 * r + 0.587 * g + 0.114 * b;
       const Cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
@@ -155,7 +155,7 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
   const skinCentroidX = skinPixels > 0 ? (skinXSum / skinPixels) / w : 0.5;
   const skinCentroidY = skinPixels > 0 ? (skinYSum / skinPixels) / h : 0.5;
 
-  // Lighting uniformity metrics, only meaningful when we have enough skin pixels
+  // Lighting uniformity metrics — only meaningful when we have enough skin pixels
   let skinLumStdDev = 0;
   let skinLeftRightDiff = 0;
   if (skinPixels > 500) {
@@ -234,7 +234,7 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
 
   // WARNING checks (only fire if no blocking issue already)
   if (issues.length === 0) {
-    // Tightened dim threshold (was 70, too lenient, missed real indoor-light cases)
+    // Tightened dim threshold (was 70 — too lenient, missed real indoor-light cases)
     if (brightnessSignal < 110) {
       issues.push({
         severity: "warn",
@@ -247,13 +247,13 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
       });
     }
 
-    // Tightened cast threshold (was 0.18), most indoor light has noticeable cast
+    // Tightened cast threshold (was 0.18) — most indoor light has noticeable cast
     if (castStrength > 0.12) {
       const castMsg: Record<typeof colourCast, string> = {
-        warm: "Yellow/warm cast detected (likely indoor light). Natural daylight gives more accurate results.",
-        cool: "Blue/cool cast detected. Natural daylight gives more accurate results.",
-        magenta: "Magenta cast detected (filter or fluorescent light). Try natural daylight without filters.",
-        green: "Green cast detected (fluorescent light). Try natural daylight.",
+        warm: "Yellow/warm cast detected (likely indoor light) — natural daylight gives more accurate results.",
+        cool: "Blue/cool cast detected — natural daylight gives more accurate results.",
+        magenta: "Magenta cast detected (filter or fluorescent light) — try natural daylight without filters.",
+        green: "Green cast detected (fluorescent light) — try natural daylight.",
         neutral: "",
       };
       const msg = castMsg[colourCast];
@@ -267,7 +267,7 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
       });
     }
 
-    // Face-in-oval check, centroid should sit in middle 50% horizontally and
+    // Face-in-oval check — centroid should sit in middle 50% horizontally and
     // upper 70% vertically. The on-screen oval covers ~24-76% width, 12-88% height.
     if (skinPixels > 500) {
       const horizOff = skinCentroidX < 0.30 || skinCentroidX > 0.70;
@@ -280,7 +280,7 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
       }
     }
 
-    // Uneven lighting on face, common cause of inaccurate season classification.
+    // Uneven lighting on face — common cause of inaccurate season classification.
     // Two checks:
     //   1. Left/right asymmetry > 25 (out of 255) → side-lit (one cheek brighter)
     //   2. Overall std-dev > 50 → harsh shadows / spotty lighting

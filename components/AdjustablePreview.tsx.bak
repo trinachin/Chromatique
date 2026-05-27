@@ -201,7 +201,7 @@ export const AdjustablePreview = forwardRef<AdjustablePreviewHandle, AdjustableP
       const sW = W / totalScale;
       const sH = H / totalScale;
 
-      // Target canvas size, cap at 1024 longest edge to stay under Claude vision limit
+      // Target canvas size — cap at 1024 longest edge to stay under Claude vision limit
       const MAX_EDGE = 1024;
       let cw = W;
       let ch = H;

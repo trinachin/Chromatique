@@ -52,7 +52,7 @@ async function callClaude(imageBase64: string, mediaType: string): Promise<unkno
     model: "claude-opus-4-7",
     max_tokens: 1024,
     // Note: temperature is deprecated/rejected for opus-4-7. Determinism comes
-    // from the structured step-by-step rubric in ANALYSIS_PROMPT itself.
+    // from the structured step-by-step rubric in ANALYSIS_PROMPT itself —
     // identical photos route through identical reasoning steps.
     messages: [
       {

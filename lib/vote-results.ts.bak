@@ -42,7 +42,7 @@ export function voteResults(results: ColourResult[]): VotedResult {
     }
   }
 
-  // Find winning season, highest count, tie-break on max confidence
+  // Find winning season — highest count, tie-break on max confidence
   let winner: { count: number; maxConf: number; representative: ColourResult } | null = null;
   for (const entry of tally.values()) {
     if (
@@ -64,7 +64,7 @@ export function voteResults(results: ColourResult[]): VotedResult {
   if (pool.length >= 2) {
     if (agreement === 1) adjusted = Math.max(baseConfidence, 0.92);
     else if (agreement >= 0.66) adjusted = Math.max(baseConfidence, 0.78);
-    else adjusted = baseConfidence * 0.85; // 3-way split, lower the confidence
+    else adjusted = baseConfidence * 0.85; // 3-way split — lower the confidence
   }
 
   return {

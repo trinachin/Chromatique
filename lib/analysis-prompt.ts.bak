@@ -13,35 +13,35 @@ Asian, Southeast Asian, Black, and mixed features. Do not default to lighter-ski
 assumptions.
 
 ═══════════════════════════════════════════════════════════════════════════════
-STEP-BY-STEP CLASSIFICATION (follow in order, do not skip)
+STEP-BY-STEP CLASSIFICATION (follow in order — do not skip)
 ═══════════════════════════════════════════════════════════════════════════════
 
-STEP 1: UNDERTONE (warm / cool / neutral)
+STEP 1 — UNDERTONE (warm / cool / neutral)
   Read the skin's underlying hue (not the surface colour):
     WARM  = golden, peachy, yellow, olive-yellow undercast
     COOL  = pink, rose, blue, bluish-olive undercast
     NEUTRAL = balanced (neither dominates clearly)
   Look at: cheek skin, the area around the eyes, neck under the jaw.
-  Veins on the inner wrist are not visible in a face photo, infer from face only.
+  Veins on the inner wrist are not visible in a face photo — infer from face only.
 
-STEP 2: VALUE / DEPTH (light / medium / deep)
+STEP 2 — VALUE / DEPTH (light / medium / deep)
   Consider the overall darkness of the person's natural colouring as a whole:
     LIGHT  = pale skin + light hair + light eyes; or low overall colour intensity
     MEDIUM = mid-tone hair/eyes, balanced overall colouring
-    DEEP   = dark hair + dark eyes + rich skin depth (any tone, fair-skinned
+    DEEP   = dark hair + dark eyes + rich skin depth (any tone — fair-skinned
              people with very dark hair/eyes can also be DEEP)
 
-STEP 3: CHROMA (clear-bright / soft-muted)
+STEP 3 — CHROMA (clear-bright / soft-muted)
   Assess whether colours on the face look saturated/vivid or dusty/blended:
     BRIGHT = high clarity, sparkling eyes, sharp eye-skin-hair boundaries
     SOFT   = blended, low-contrast, dusty, "watercolour" quality
 
-STEP 4: CONTRAST (between hair, skin, eyes)
+STEP 4 — CONTRAST (between hair, skin, eyes)
   HIGH    = strong dark-vs-light separation (e.g. black hair + fair skin)
   MEDIUM  = moderate separation
   LOW     = colours blend into each other
 
-STEP 5: MAP to one of 16 seasons using this table
+STEP 5 — MAP to one of 16 seasons using this table
 
   SPRING (warm + light/medium, fresh)
     Light Spring   = warm + light + soft        (delicate, summer-leaning)
@@ -124,10 +124,6 @@ Schema:
   "confidence": number                    // 0.0 to 1.0
 }
 
-DO NOT return a palette or avoid array, Chromatique looks those up from a
+DO NOT return a palette or avoid array — Chromatique looks those up from a
 canonical table. Tone for text fields: warm, editorial, encouraging. Never use
-body-shaming or "problem area" language.
-
-PUNCTUATION RULE: NEVER use em-dashes (—) in any text you return. Use commas,
-periods, colons, or split into multiple sentences instead. This applies to
-styleNote and every other text field.`;
+body-shaming or "problem area" language.`;

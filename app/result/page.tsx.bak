@@ -1,0 +1,220 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Navbar } from "@/components/Navbar";
+import { ColourSwatch } from "@/components/ColourSwatch";
+import { Button } from "@/components/ui/button";
+import { ShareDialog } from "@/components/ShareDialog";
+import { RefreshCw, AlertTriangle, Sparkles, Share2 } from "lucide-react";
+import type { ColourResult } from "@/lib/types";
+import { getSeasonProfile, SEASON_FAMILY_ACCENT } from "@/lib/seasons";
+import { cn } from "@/lib/utils";
+
+export default function ResultPage() {
+  const router = useRouter();
+  const [result, setResult] = useState<ColourResult | null>(null);
+  const [ready, setReady] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+
+  useEffect(() => {
+    const raw = sessionStorage.getItem("chromatique_result");
+    if (!raw) {
+      router.replace("/analyze");
+      return;
+    }
+    try {
+      setResult(JSON.parse(raw));
+      setTimeout(() => setReady(true), 100);
+    } catch {
+      router.replace("/analyze");
+    }
+  }, [router]);
+
+  if (!result) return null;
+
+  const familyAccent = SEASON_FAMILY_ACCENT[result.seasonFamily] ?? "var(--c-accent)";
+  const description = getSeasonProfile(result.season)?.description ?? `You radiate in ${result.season} colours.`;
+  const undertoneLabel = { warm: "Warm", cool: "Cool", neutral: "Neutral" }[result.undertone];
+  const lowConfidence = result.confidence < 0.5;
+
+  return (
+    <div className="min-h-screen flex flex-col bg-[var(--c-bg)]">
+      <Navbar />
+
+      <main className="flex-1 max-w-2xl mx-auto w-full px-6 py-10 space-y-10">
+
+        {/* Low-confidence warning */}
+        {lowConfidence && (
+          <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+            <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">Photo quality could be improved</p>
+              <p className="mt-0.5 text-amber-700">
+                {result.styleNote || "For a more accurate result, try a clearer photo in natural light without sunglasses or filters."}
+              </p>
+              <Link href="/analyze" className="mt-2 inline-block underline text-xs">
+                Retake analysis →
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Season hero */}
+        <section
+          className={cn(
+            "rounded-3xl p-8 text-center transition-all duration-700",
+            ready ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          )}
+          style={{ backgroundColor: familyAccent + "18", border: `2px solid ${familyAccent}30` }}
+        >
+          <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: familyAccent }}>
+            Your colour season
+          </p>
+          <h1
+            className="font-display text-4xl sm:text-5xl font-bold mb-3"
+            style={{ color: familyAccent }}
+          >
+            {result.season}
+          </h1>
+          <p className="text-[var(--c-ink-soft)] text-sm leading-relaxed max-w-md mx-auto mb-5">
+            {description}
+          </p>
+          <div className="flex justify-center gap-3 flex-wrap">
+            <Pill label={`${result.seasonFamily} family`} color={familyAccent} />
+            <Pill label={`${undertoneLabel} undertone`} color={familyAccent} />
+          </div>
+        </section>
+
+        {/* Your palette */}
+        <section>
+          <SectionHeader icon={<Sparkles className="w-4 h-4" />} title="Your palette" />
+          <p className="text-sm text-[var(--c-ink-soft)] mb-6">
+            Colours that make you glow.
+          </p>
+          <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
+            {result.palette.map((swatch, i) => (
+              <ColourSwatch
+                key={swatch.hex + i}
+                name={swatch.name}
+                hex={swatch.hex}
+                size="lg"
+                delay={i * 60}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* Colours to avoid */}
+        <section>
+          <SectionHeader
+            icon={<span className="text-sm">✕</span>}
+            title="Colours to avoid"
+          />
+          <p className="text-sm text-[var(--c-ink-soft)] mb-6">
+            These clash with your undertone, worth skipping near your face.
+          </p>
+          <div className="flex flex-wrap gap-4">
+            {result.avoid.map((swatch, i) => (
+              <div key={swatch.hex + i} className="flex flex-col items-center gap-1.5 opacity-60">
+                <div
+                  className="w-14 h-14 rounded-xl border border-black/10 relative overflow-hidden"
+                  style={{ backgroundColor: swatch.hex }}
+                >
+                  <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(0,0,0,0.12)_4px,rgba(0,0,0,0.12)_5px)]" />
+                </div>
+                <span className="text-[10px] text-[var(--c-ink)] max-w-[56px] text-center leading-tight">
+                  {swatch.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Style note */}
+        {result.styleNote && !lowConfidence && (
+          <section className="bg-[var(--c-surface)] rounded-2xl p-6 border border-[var(--c-line)]">
+            <SectionHeader icon={<Sparkles className="w-4 h-4" />} title="Your style note" />
+            <p className="text-[var(--c-ink)] leading-relaxed">{result.styleNote}</p>
+          </section>
+        )}
+
+        {/* Coming soon teaser */}
+        <section className="rounded-2xl border-2 border-dashed border-[var(--c-line)] p-6">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--c-ink-soft)] mb-4">
+            Coming soon
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { icon: "🪞", label: "Body analysis" },
+              { icon: "📐", label: "Fit guide" },
+              { icon: "🌿", label: "Fabric picks" },
+              { icon: "🛍️", label: "Product recs" },
+            ].map(({ icon, label }) => (
+              <div
+                key={label}
+                className="flex items-center gap-2 text-sm text-[var(--c-ink-soft)] bg-[var(--c-sand)] rounded-xl px-3 py-2.5"
+              >
+                <span>{icon}</span>
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row gap-3 pb-6">
+          <Link href="/analyze" className="flex-1">
+            <Button variant="secondary" size="md" className="w-full gap-2">
+              <RefreshCw className="w-4 h-4" />
+              Try another photo
+            </Button>
+          </Link>
+          <Button
+            size="md"
+            className="flex-1 gap-2"
+            onClick={() => setShareOpen(true)}
+          >
+            <Share2 className="w-4 h-4" />
+            Share my result
+          </Button>
+        </div>
+      </main>
+
+      <footer className="border-t border-[var(--c-line)] py-6">
+        <div className="max-w-2xl mx-auto px-6 text-center text-xs text-[var(--c-ink-soft)]">
+          Your photo was analysed and immediately discarded. We never store or train on it.
+        </div>
+      </footer>
+
+      {/* Share dialog */}
+      <ShareDialog
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        result={result}
+        url={typeof window !== "undefined" ? `${window.location.origin}/` : "https://chromatique-trina1.vercel.app/"}
+      />
+    </div>
+  );
+}
+
+function Pill({ label, color }: { label: string; color: string }) {
+  return (
+    <span
+      className="text-xs font-semibold px-3 py-1 rounded-full"
+      style={{ backgroundColor: color + "20", color }}
+    >
+      {label}
+    </span>
+  );
+}
+
+function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-4">
+      <span className="text-[var(--c-accent)]">{icon}</span>
+      <h2 className="font-display text-xl font-semibold text-[var(--c-ink)]">{title}</h2>
+    </div>
+  );
+}

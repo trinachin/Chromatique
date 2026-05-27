@@ -68,7 +68,7 @@ export default function AnalyzePage() {
         setIgnoreWarning(false);
       })
       .catch(() => {
-        // Quality check failure shouldn't block analysis, just skip warnings
+        // Quality check failure shouldn't block analysis — just skip warnings
         if (!cancelled) setQuality(null);
       })
       .finally(() => {
@@ -188,11 +188,11 @@ export default function AnalyzePage() {
       setFirstResult(result);
 
       if (result.confidence >= HIGH_CONFIDENCE_THRESHOLD) {
-        // Confident enough, ship directly
+        // Confident enough — ship directly
         sessionStorage.setItem("chromatique_result", JSON.stringify(result));
         router.push("/result");
       } else {
-        // Low confidence, offer to take 2 more photos for aggregation
+        // Low confidence — offer to take 2 more photos for aggregation
         setStage("low_confidence");
       }
     } catch (err) {
@@ -251,7 +251,7 @@ export default function AnalyzePage() {
     }
   };
 
-  /** Handle extra-photo file selection, resize + push into extraPhotos. */
+  /** Handle extra-photo file selection — resize + push into extraPhotos. */
   const handleExtraFile = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) return;
     if (file.size > 25 * 1024 * 1024) return;
@@ -259,7 +259,7 @@ export default function AnalyzePage() {
       const resized = await resizeImage(file);
       setExtraPhotos((prev) => (prev.length < 2 ? [...prev, resized] : prev));
     } catch {
-      // Quietly skip, user can try again
+      // Quietly skip — user can try again
     }
   }, []);
 
@@ -296,7 +296,7 @@ export default function AnalyzePage() {
     );
   }
 
-  // Low-confidence first result, offer to take 2 more photos
+  // Low-confidence first result — offer to take 2 more photos
   if (stage === "low_confidence" && firstResult && preview) {
     const confPct = Math.round(firstResult.confidence * 100);
     return (
@@ -380,7 +380,7 @@ export default function AnalyzePage() {
                 )}
                 onClick={() => {
                   if (src || idx === 0) return;
-                  // Slot 2 or 3, open file picker for extras
+                  // Slot 2 or 3 — open file picker for extras
                   if (isDesktop) {
                     setShowExtraCamera(true);
                   } else {
@@ -479,7 +479,7 @@ export default function AnalyzePage() {
       <Navbar />
 
       <main className="flex-1 max-w-lg mx-auto w-full px-6 py-12">
-        {/* Feedback chips, pinned to top so issues are visible without scrolling */}
+        {/* Feedback chips — pinned to top so issues are visible without scrolling */}
         {(errorMsg || stage === "error") && (
           <div className="mb-6 flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -579,7 +579,7 @@ export default function AnalyzePage() {
             <div className="relative" onClick={(e) => e.stopPropagation()}>
               <AdjustablePreview ref={adjustableRef} src={preview} />
 
-              {/* Oval face-frame guide, sits ABOVE the adjustable image (non-interactive) */}
+              {/* Oval face-frame guide — sits ABOVE the adjustable image (non-interactive) */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <svg viewBox="0 0 100 130" preserveAspectRatio="xMidYMid meet" className="h-[85%] w-auto opacity-70">
                   <ellipse
@@ -683,7 +683,7 @@ export default function AnalyzePage() {
               "Remove glasses and heavy makeup",
               "Make sure your face fills most of the frame",
               "Upload photos with no filters",
-              "Skin conditions don't affect your result. We read your underlying undertone, not surface marks",
+              "Skin conditions don't affect your result — we read your underlying undertone, not surface marks",
             ].map((tip) => (
               <li key={tip} className="flex items-start gap-2">
                 <span className="text-[var(--c-accent)] mt-0.5">·</span>

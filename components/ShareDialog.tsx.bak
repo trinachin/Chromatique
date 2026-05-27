@@ -95,7 +95,7 @@ export function ShareDialog({ open, onClose, result, url }: ShareDialogProps) {
       // Fall back to link-only share
       await navigator.share({ title: `My colour season is ${result.season}`, text: shareText, url });
     } catch (err) {
-      // User cancelled the share, not an error worth surfacing
+      // User cancelled the share — not an error worth surfacing
       if ((err as Error)?.name === "AbortError") return;
       setError("Couldn't open the share sheet. Try the buttons below.");
     }

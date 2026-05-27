@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Canonical 16-season system, Chromatique's single source of truth.
+// Canonical 16-season system — Chromatique's single source of truth.
 //
 // Sources synthesised:
 //   • House of Colour 16-tone system (houseofcolour.com)
@@ -10,28 +10,28 @@
 //
 // Each season has a stable 12-colour palette and 5 avoid colours so that
 // repeat analyses for the same season always render identically. Claude only
-// classifies the season, the palette comes from this table.
+// classifies the season — the palette comes from this table.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { ColourSwatch, SeasonFamily, Undertone } from "./types";
 
 export const SEASON_NAMES = [
-  // Spring family, warm, light, clear
+  // Spring family — warm, light, clear
   "Light Spring",
   "True Spring",
   "Bright Spring",
   "Warm Spring",
-  // Summer family, cool, light, soft
+  // Summer family — cool, light, soft
   "Light Summer",
   "True Summer",
   "Soft Summer",
   "Cool Summer",
-  // Autumn family, warm, deep, muted
+  // Autumn family — warm, deep, muted
   "Soft Autumn",
   "True Autumn",
   "Warm Autumn",
   "Deep Autumn",
-  // Winter family, cool, deep, clear
+  // Winter family — cool, deep, clear
   "Bright Winter",
   "True Winter",
   "Cool Winter",
