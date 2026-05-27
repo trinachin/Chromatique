@@ -99,11 +99,11 @@ export const TRUE_SPRING: SeasonProfile = {
     { name: "Chocolate",      hex: "#6B4423" },
   ],
   avoid: [
-    { name: "Black",          hex: "#000000" },
-    { name: "Pure White",     hex: "#FFFFFF" },
-    { name: "Icy Pink",       hex: "#F4C7D2" },
-    { name: "Plum",           hex: "#682E63" },
-    { name: "Dusty Mauve",    hex: "#9B7B8E" },
+    { name: "Pure Black",     hex: "#000000" },   // too stark, dark
+    { name: "Icy Pink",       hex: "#F4C7D2" },   // cool pastel
+    { name: "Burgundy",       hex: "#5C1A1A" },   // cool dark red
+    { name: "Slate Blue",     hex: "#5C6772" },   // cool muted blue
+    { name: "Cool Grey",      hex: "#8C9097" },   // cool neutral
   ],
 };
 
@@ -213,11 +213,11 @@ export const TRUE_SUMMER: SeasonProfile = {
     { name: "Cool Taupe",     hex: "#9A8F84" },
   ],
   avoid: [
-    { name: "Orange",         hex: "#EE6F2D" },
-    { name: "Mustard",        hex: "#C09A2B" },
-    { name: "Tomato",         hex: "#D9342B" },
-    { name: "Warm Beige",     hex: "#D6B895" },
-    { name: "Bright Yellow",  hex: "#F2D03C" },
+    { name: "Bright Orange",  hex: "#EE6F2D" },   // warm clear
+    { name: "Mustard",        hex: "#C09A2B" },   // warm muted yellow
+    { name: "Camel",          hex: "#C5946A" },   // warm neutral brown
+    { name: "Olive Green",    hex: "#7A8B3E" },   // warm muted green
+    { name: "Tomato Red",     hex: "#D9342B" },   // warm clear red
   ],
 };
 
@@ -269,11 +269,11 @@ export const COOL_SUMMER: SeasonProfile = {
     { name: "Charcoal",       hex: "#3E4046" },
   ],
   avoid: [
-    { name: "Orange",         hex: "#EE6F2D" },
-    { name: "Warm Camel",     hex: "#C5946A" },
-    { name: "Mustard",        hex: "#C09A2B" },
-    { name: "Tomato",         hex: "#D9342B" },
-    { name: "Khaki",          hex: "#9A8859" },
+    { name: "Bright Orange",  hex: "#EE6F2D" },   // warm clear
+    { name: "Mustard",        hex: "#C09A2B" },   // warm muted yellow
+    { name: "Camel",          hex: "#C5946A" },   // warm neutral brown
+    { name: "Olive Green",    hex: "#7A8B3E" },   // warm muted green
+    { name: "Peach",          hex: "#F2A878" },   // warm pastel
   ],
 };
 
@@ -355,11 +355,11 @@ export const WARM_AUTUMN: SeasonProfile = {
     { name: "Bronze",         hex: "#8E5A2C" },
   ],
   avoid: [
-    { name: "Pure White",     hex: "#FFFFFF" },
-    { name: "Pure Black",     hex: "#000000" },
-    { name: "Fuchsia",        hex: "#C2257B" },
-    { name: "Icy Pastel Pink",hex: "#F7D2DE" },
-    { name: "Cobalt",         hex: "#214AC7" },
+    { name: "Pure White",     hex: "#FFFFFF" },   // too stark
+    { name: "Fuchsia",        hex: "#C2257B" },   // cool clear pink
+    { name: "Cobalt",         hex: "#214AC7" },   // cool clear blue
+    { name: "Lavender",       hex: "#B8A0D8" },   // cool pastel purple
+    { name: "Pure Black",     hex: "#000000" },   // too stark dark
   ],
 };
 
@@ -383,11 +383,11 @@ export const DEEP_AUTUMN: SeasonProfile = {
     { name: "Charcoal Brown", hex: "#2E2620" },
   ],
   avoid: [
-    { name: "Pastel Pink",    hex: "#F2C8D2" },
-    { name: "Icy Blue",       hex: "#C7DCEA" },
-    { name: "Lemon Yellow",   hex: "#F2D03C" },
-    { name: "Pure White",     hex: "#FFFFFF" },
-    { name: "Powder Blue",    hex: "#BBD4E2" },
+    { name: "Pastel Pink",    hex: "#F2C8D2" },   // cool pastel
+    { name: "Icy Blue",       hex: "#C7DCEA" },   // cool pastel blue
+    { name: "Lemon Yellow",   hex: "#F2D03C" },   // bright pale yellow
+    { name: "Pure White",     hex: "#FFFFFF" },   // too stark
+    { name: "Hot Pink",       hex: "#E84A8E" },   // cool clear pink (different value)
   ],
 };
 
@@ -413,11 +413,11 @@ export const BRIGHT_WINTER: SeasonProfile = {
     { name: "Charcoal",       hex: "#2A2C30" },
   ],
   avoid: [
-    { name: "Muted Olive",    hex: "#7E7A5E" },
-    { name: "Dusty Rose",     hex: "#C99CA5" },
-    { name: "Warm Beige",     hex: "#D6B895" },
-    { name: "Mustard",        hex: "#C09A2B" },
-    { name: "Rust",           hex: "#A6471F" },
+    { name: "Mustard",        hex: "#C09A2B" },   // muted warm yellow
+    { name: "Dusty Rose",     hex: "#C99CA5" },   // muted cool pink (chroma issue)
+    { name: "Camel",          hex: "#C5946A" },   // warm neutral brown
+    { name: "Sage Green",     hex: "#A0AE92" },   // muted cool-green
+    { name: "Peach",          hex: "#F2A878" },   // warm pastel
   ],
 };
 
@@ -441,11 +441,11 @@ export const TRUE_WINTER: SeasonProfile = {
     { name: "Silver Grey",    hex: "#B7BABE" },
   ],
   avoid: [
-    { name: "Orange",         hex: "#EE6F2D" },
-    { name: "Mustard",        hex: "#C09A2B" },
-    { name: "Warm Camel",     hex: "#C5946A" },
-    { name: "Rust",           hex: "#A6471F" },
-    { name: "Olive Green",    hex: "#7E7A5E" },
+    { name: "Bright Orange",  hex: "#EE6F2D" },   // warm clear
+    { name: "Mustard",        hex: "#C09A2B" },   // warm muted yellow
+    { name: "Camel",          hex: "#C5946A" },   // warm neutral brown
+    { name: "Olive Green",    hex: "#7A8B3E" },   // warm muted green
+    { name: "Pastel Peach",   hex: "#F8C6A4" },   // warm pastel
   ],
 };
 
@@ -469,11 +469,11 @@ export const COOL_WINTER: SeasonProfile = {
     { name: "Slate",          hex: "#4F5662" },
   ],
   avoid: [
-    { name: "Orange",         hex: "#EE6F2D" },
-    { name: "Mustard",        hex: "#C09A2B" },
-    { name: "Camel",          hex: "#C5946A" },
-    { name: "Rust",           hex: "#A6471F" },
-    { name: "Tomato",         hex: "#D9342B" },
+    { name: "Bright Orange",  hex: "#EE6F2D" },   // warm clear
+    { name: "Mustard",        hex: "#C09A2B" },   // warm muted yellow
+    { name: "Camel",          hex: "#C5946A" },   // warm neutral brown
+    { name: "Olive Green",    hex: "#7A8B3E" },   // warm muted green
+    { name: "Cream",          hex: "#F4E6CC" },   // warm pale neutral
   ],
 };
 
@@ -497,11 +497,11 @@ export const DEEP_WINTER: SeasonProfile = {
     { name: "Charcoal",       hex: "#22232A" },
   ],
   avoid: [
-    { name: "Pastel Peach",   hex: "#F8C6A4" },
-    { name: "Mustard",        hex: "#C09A2B" },
-    { name: "Camel",          hex: "#C5946A" },
-    { name: "Warm Beige",     hex: "#D6B895" },
-    { name: "Rust",           hex: "#A6471F" },
+    { name: "Pastel Peach",   hex: "#F8C6A4" },   // warm pastel (light + warm)
+    { name: "Mustard",        hex: "#C09A2B" },   // muted warm yellow
+    { name: "Camel",          hex: "#C5946A" },   // warm neutral brown
+    { name: "Olive Green",    hex: "#7A8B3E" },   // muted warm green (different family)
+    { name: "Dusty Rose",     hex: "#C99CA5" },   // muted cool pink (chroma issue)
   ],
 };
 
