@@ -17,6 +17,7 @@ const hanken = Hanken_Grotesk({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://chromatique-trina1.vercel.app"),
   title: "Chromatique · Discover Your Colour Season",
   description:
     "AI-powered personal colour analysis. Upload a selfie and discover your unique colour season, palette, and styling guidance in seconds.",
@@ -24,6 +25,13 @@ export const metadata: Metadata = {
     title: "Chromatique · Discover Your Colour Season",
     description: "Upload a selfie → get your colour season, palette, and styling guidance powered by AI.",
     type: "website",
+    siteName: "Chromatique",
+    locale: "en_SG",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Chromatique · Discover Your Colour Season",
+    description: "Upload a selfie → get your colour season, palette, and styling guidance powered by AI.",
   },
 };
 
