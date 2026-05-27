@@ -22,8 +22,8 @@ export default function AnalyzePage() {
   const [showCameraModal, setShowCameraModal] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
 
-  // Detect desktop on mount, desktop "Take a photo" opens the webcam modal,
-  // mobile uses the native input[capture] which triggers the system camera app.
+  // Desktop "Take a photo" opens the webcam modal; mobile uses the native
+  // input[capture] which triggers the system camera app instead.
   useEffect(() => {
     const isMobileUA = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const isTouchPrimary = window.matchMedia?.("(pointer: coarse)").matches ?? false;
@@ -192,10 +192,34 @@ export default function AnalyzePage() {
                 alt="Your selfie"
                 className="w-full max-h-80 object-cover rounded-2xl"
               />
+
+              {/* Oval face-frame guide — helps users check alignment before analyse */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <svg viewBox="0 0 100 130" preserveAspectRatio="xMidYMid meet" className="h-[85%] w-auto opacity-70">
+                  <ellipse
+                    cx="50"
+                    cy="65"
+                    rx="34"
+                    ry="48"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="1.2"
+                    strokeDasharray="3 2"
+                    style={{ filter: "drop-shadow(0 0 4px rgba(0,0,0,0.5))" }}
+                  />
+                </svg>
+              </div>
+
+              {/* Hint label */}
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-[var(--c-ink)]/70 text-white text-[11px] font-medium px-3 py-1.5 rounded-full pointer-events-none">
+                Centre your face in the oval
+              </div>
+
+              {/* Remove / retake */}
               <button
                 onClick={(e) => { e.stopPropagation(); setPreview(null); }}
                 className="absolute top-3 right-3 bg-[var(--c-ink)]/70 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-[var(--c-ink)] transition-colors"
-                aria-label="Remove photo"
+                aria-label="Remove photo and retake"
               >
                 <X className="w-4 h-4" />
               </button>

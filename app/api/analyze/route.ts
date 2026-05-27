@@ -51,6 +51,9 @@ async function callClaude(imageBase64: string, mediaType: string): Promise<unkno
   const msg = await anthropic.messages.create({
     model: "claude-opus-4-7",
     max_tokens: 1024,
+    // Note: temperature is deprecated/rejected for opus-4-7. Determinism comes
+    // from the structured step-by-step rubric in ANALYSIS_PROMPT itself —
+    // identical photos route through identical reasoning steps.
     messages: [
       {
         role: "user",
@@ -69,7 +72,9 @@ async function callClaude(imageBase64: string, mediaType: string): Promise<unkno
     ],
   });
 
-  const text = msg.content[0].type === "text" ? msg.content[0].text : "";
+  // Find the first text block (in case future thinking blocks come first)
+  const textBlock = msg.content.find((b) => b.type === "text");
+  const text = textBlock && textBlock.type === "text" ? textBlock.text : "";
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error("No JSON in Claude response");
   return JSON.parse(jsonMatch[0]);
