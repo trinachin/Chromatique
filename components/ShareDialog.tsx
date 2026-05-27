@@ -1,7 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { X, Download, Copy, Check, Share2, MessageCircle, Send, Twitter } from "lucide-react";
+import { X, Download, Copy, Check, Share2, MessageCircle, Send } from "lucide-react";
+
+// X (formerly Twitter) logo isn't shipped in this lucide-react version
+function XLogo({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" />
+    </svg>
+  );
+}
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { generateShareCard } from "@/lib/share-card";
@@ -136,7 +145,7 @@ export function ShareDialog({ open, onClose, result, url }: ShareDialogProps) {
     },
     {
       name: "X",
-      icon: Twitter,
+      icon: XLogo,
       href: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
       color: "#000000",
     },
