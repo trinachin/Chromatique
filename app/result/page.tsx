@@ -8,6 +8,7 @@ import { ColourSwatch } from "@/components/ColourSwatch";
 import { Button } from "@/components/ui/button";
 import { ShareDialog } from "@/components/ShareDialog";
 import { MaterialChip } from "@/components/MaterialChip";
+import { MakeupFeaturesSection } from "@/components/MakeupFeaturesSection";
 import { RefreshCw, AlertTriangle, Sparkles, Share2, Download, Gem, Brush, Scissors } from "lucide-react";
 import type { ColourResult } from "@/lib/types";
 import { getSeasonProfile, getSeasonDetails, getTaggedPalette, SEASON_FAMILY_ACCENT } from "@/lib/seasons";
@@ -247,6 +248,11 @@ export default function ResultPage() {
               </div>
             </div>
           </section>
+        )}
+
+        {/* Makeup & Features (per ADD_RESEARCH) — only when Claude returned features */}
+        {result.features && (
+          <MakeupFeaturesSection features={result.features} result={result} />
         )}
 
         {/* Style note */}

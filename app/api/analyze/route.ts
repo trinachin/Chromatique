@@ -1,8 +1,45 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { ANALYSIS_PROMPT } from "@/lib/analysis-prompt";
-import type { ColourResult } from "@/lib/types";
+import type { ColourResult, FacialFeatures } from "@/lib/types";
 import { getSeasonProfile, isSeasonName } from "@/lib/seasons";
+
+const EYE_SHAPES = ["Almond","Round","Monolid","Hooded monolid","Parallel double-lid","Outer double-lid","Hooded","Downturned","Upturned","Deep-set"] as const;
+const NOSE_TYPES = ["Button","Straight","Aquiline","Snub","Low-bridge","Wide","Long","Short"] as const;
+const LIP_SHAPES = ["Full","Thin","Heart-shaped","Bow-shaped","Downturned","Wide","Round","Top-heavy","Bottom-heavy"] as const;
+const FACE_SHAPES = ["Oval","Round","Square","Heart","Diamond","Oblong","Triangle"] as const;
+const BROW_SHAPES = ["Straight","Soft arch","High arch","Rounded","Flat"] as const;
+const UNDERTONES_4 = ["warm","cool","neutral","olive"] as const;
+const SKIN_TEXTURES = ["Smooth","Combination","Textured"] as const;
+
+function validateFeatures(raw: unknown): FacialFeatures | undefined {
+  if (typeof raw !== "object" || raw === null) return undefined;
+  const r = raw as Record<string, unknown>;
+  const inAny = <T extends readonly string[]>(list: T, v: unknown): v is T[number] =>
+    typeof v === "string" && (list as readonly string[]).includes(v);
+
+  if (
+    inAny(EYE_SHAPES, r.eyeShape) &&
+    inAny(NOSE_TYPES, r.noseType) &&
+    inAny(LIP_SHAPES, r.lipShape) &&
+    inAny(FACE_SHAPES, r.faceShape) &&
+    inAny(BROW_SHAPES, r.browShape) &&
+    inAny(UNDERTONES_4, r.refinedUndertone) &&
+    inAny(SKIN_TEXTURES, r.skinTexture)
+  ) {
+    return {
+      eyeShape: r.eyeShape,
+      noseType: r.noseType,
+      lipShape: r.lipShape,
+      faceShape: r.faceShape,
+      browShape: r.browShape,
+      refinedUndertone: r.refinedUndertone,
+      skinTexture: r.skinTexture,
+      notes: typeof r.notes === "string" ? r.notes : "",
+    };
+  }
+  return undefined;
+}
 
 // Claude vision on a real photo typically takes 8-20s. Default Vercel function
 // timeout is 10s on Hobby, extend so analysis doesn't get cut off mid-call.
@@ -50,7 +87,7 @@ function validateClassification(raw: unknown): ClaudeClassification | null {
 async function callClaude(imageBase64: string, mediaType: string): Promise<unknown> {
   const msg = await anthropic.messages.create({
     model: "claude-opus-4-7",
-    max_tokens: 1024,
+    max_tokens: 1500,  // bumped from 1024 to fit features object
     // Note: temperature is deprecated/rejected for opus-4-7. Determinism comes
     // from the structured step-by-step rubric in ANALYSIS_PROMPT itself.
     // identical photos route through identical reasoning steps.
@@ -93,10 +130,11 @@ export async function POST(req: Request) {
 
     // Try once, retry once on parse/validation failure
     let classification: ClaudeClassification | null = null;
+    let rawResponse: unknown = null;
     for (let attempt = 0; attempt < 2 && !classification; attempt++) {
       try {
-        const raw = await callClaude(imageBase64, mediaType);
-        classification = validateClassification(raw);
+        rawResponse = await callClaude(imageBase64, mediaType);
+        classification = validateClassification(rawResponse);
       } catch (err) {
         if (attempt === 1) throw err;
       }
@@ -113,13 +151,16 @@ export async function POST(req: Request) {
     // Claude only classifies; the palette is fixed per season.
     const profile = getSeasonProfile(classification.season);
     if (!profile) {
-      // Should be impossible because validateClassification rejects unknown names,
-      // but guard belt-and-suspenders.
       return NextResponse.json(
         { error: "Unknown season returned by classifier" },
         { status: 502 }
       );
     }
+
+    // Optional facial-feature analysis (best-effort: present if Claude returned
+    // a valid features object, absent otherwise — UI degrades gracefully).
+    const featuresRaw = (rawResponse as { features?: unknown } | null)?.features;
+    const features = validateFeatures(featuresRaw);
 
     const result: ColourResult = {
       season: classification.season,
@@ -131,6 +172,7 @@ export async function POST(req: Request) {
       fabricNote: classification.fabricNote ?? "",
       styleNote: classification.styleNote ?? "",
       confidence: classification.confidence,
+      ...(features ? { features } : {}),
     };
 
     return NextResponse.json(result);

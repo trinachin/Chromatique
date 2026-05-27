@@ -114,14 +114,69 @@ exactly one of these 16 strings (case-sensitive):
   "Soft Autumn",  "True Autumn", "Warm Autumn",   "Deep Autumn",
   "Bright Winter","True Winter", "Cool Winter",   "Deep Winter"
 
+═══════════════════════════════════════════════════════════════════════════════
+FACIAL FEATURE ANALYSIS (return alongside the colour classification)
+═══════════════════════════════════════════════════════════════════════════════
+Also analyse the person's facial features so we can suggest matched makeup
+techniques. Use ONLY the labels from the controlled vocabularies below.
+
+INCLUSIVE TAXONOMY NOTES (important):
+  - Eye-shape vocabulary includes monolid, parallel double-lid, and outer
+    double-lid distinctions. Do NOT default to "almond" for every East Asian /
+    SEA face. Read the actual crease landmark.
+  - "Low-bridge" is the neutral term for a softer nasal projection. Never use
+    "flat" or "weak" to describe a nose.
+  - "Olive" undertone is a 4th option distinct from warm/cool/neutral. Common
+    in Filipino, Malay, Vietnamese, Thai, Indonesian, southern Chinese, South
+    Asian, and Mediterranean users. If skin has a subtle yellow-green or grey
+    cast (not pure yellow-gold warmth, not pure pink coolness), choose "olive".
+  - If features fall between two categories, pick the closest single label and
+    note any blended quality in "notes".
+
+RESPECTFUL LANGUAGE RULES for "notes":
+  - Always frame as appreciation, never correction. "Your low-bridge nose
+    gives you soft, gentle dimension." NOT "Your nose is flat."
+  - Never say "fix", "slim", "shrink", "exotic", "Asian eye", "phoenix eye"
+    (in English), "Eurasian", "ethnic", or describe features as problems.
+  - Never compare to a Western or any other ideal.
+
+═══════════════════════════════════════════════════════════════════════════════
+EXTENDED OUTPUT
+═══════════════════════════════════════════════════════════════════════════════
+Return ONLY valid minified JSON, no prose, no markdown. Season MUST be one of
+the 16 names above (case-sensitive):
+  "Light Spring", "True Spring", "Bright Spring", "Warm Spring",
+  "Light Summer", "True Summer", "Soft Summer", "Cool Summer",
+  "Soft Autumn",  "True Autumn", "Warm Autumn",   "Deep Autumn",
+  "Bright Winter","True Winter", "Cool Winter",   "Deep Winter"
+
+Each features field MUST be one of these exact strings:
+  eyeShape:  "Almond"|"Round"|"Monolid"|"Hooded monolid"|"Parallel double-lid"|"Outer double-lid"|"Hooded"|"Downturned"|"Upturned"|"Deep-set"
+  noseType:  "Button"|"Straight"|"Aquiline"|"Snub"|"Low-bridge"|"Wide"|"Long"|"Short"
+  lipShape:  "Full"|"Thin"|"Heart-shaped"|"Bow-shaped"|"Downturned"|"Wide"|"Round"|"Top-heavy"|"Bottom-heavy"
+  faceShape: "Oval"|"Round"|"Square"|"Heart"|"Diamond"|"Oblong"|"Triangle"
+  browShape: "Straight"|"Soft arch"|"High arch"|"Rounded"|"Flat"
+  refinedUndertone: "warm"|"cool"|"neutral"|"olive"
+  skinTexture: "Smooth"|"Combination"|"Textured"
+
 Schema:
 {
-  "season": string,                       // one of the 16 above, exact spelling
+  "season": string,
   "seasonFamily": "Spring"|"Summer"|"Autumn"|"Winter",
   "undertone": "warm"|"cool"|"neutral",
-  "monkToneBand": string,                 // optional MST band, else ""
-  "styleNote": string,                    // 1-2 sentences, warm and encouraging
-  "confidence": number                    // 0.0 to 1.0
+  "monkToneBand": string,
+  "styleNote": string,
+  "confidence": number,
+  "features": {
+    "eyeShape": string,
+    "noseType": string,
+    "lipShape": string,
+    "faceShape": string,
+    "browShape": string,
+    "refinedUndertone": string,
+    "skinTexture": string,
+    "notes": string
+  }
 }
 
 DO NOT return a palette or avoid array, Chromatique looks those up from a
@@ -131,4 +186,4 @@ body-shaming or "problem area" language.
 PUNCTUATION RULE: NEVER use em-dashes (U+2014, the long dash) in any text you
 return. Use commas, periods, colons, or split into multiple sentences instead.
 En-dashes are also discouraged outside numeric ranges. Hyphens are fine.
-This rule applies to styleNote and every other text field.`;
+This rule applies to styleNote, notes, and every other text field.`;
