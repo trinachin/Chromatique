@@ -28,6 +28,8 @@ export interface QualityReport {
     avgLuminance: number;          // 0-255 across whole image
     centerLuminance: number;       // 0-255, Gaussian-weighted toward face area
     skinLuminance: number;         // 0-255, average over skin pixels only
+    skinLumStdDev: number;         // 0-255, spread of skin luminance (overall evenness)
+    skinLeftRightDiff: number;     // 0-255, |left half mean - right half mean|
     colourCast: "warm" | "cool" | "magenta" | "green" | "neutral";
     castStrength: number;          // 0-1
     skinPixelRatio: number;        // 0-1, fraction of pixels that look like skin
@@ -74,12 +76,17 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
   let highlightCount = 0;
   const highlightThreshold = 180;
 
-  // Skin-tone counters + centroid + skin luminance
+  // Skin-tone counters + centroid + skin luminance + left/right split for asymmetry
   let skinPixels = 0;
   let skinInCenter = 0;
   let skinLumSum = 0;
+  let skinLumSqSum = 0;  // for std-dev
   let skinXSum = 0;
   let skinYSum = 0;
+  let skinLeftLumSum = 0;
+  let skinLeftCount = 0;
+  let skinRightLumSum = 0;
+  let skinRightCount = 0;
   let totalPixels = 0;
 
   // Central rectangle: middle 60% horizontally, upper-middle 60% vertically
@@ -125,8 +132,16 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
       if (isSkin) {
         skinPixels++;
         skinLumSum += lum;
+        skinLumSqSum += lum * lum;
         skinXSum += x;
         skinYSum += y;
+        if (x < w / 2) {
+          skinLeftLumSum += lum;
+          skinLeftCount++;
+        } else {
+          skinRightLumSum += lum;
+          skinRightCount++;
+        }
         if (x >= centerXMin && x <= centerXMax && y >= centerYMin && y <= centerYMax) {
           skinInCenter++;
         }
@@ -139,6 +154,20 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
   const skinLuminance = skinPixels > 0 ? skinLumSum / skinPixels : avgLuminance;
   const skinCentroidX = skinPixels > 0 ? (skinXSum / skinPixels) / w : 0.5;
   const skinCentroidY = skinPixels > 0 ? (skinYSum / skinPixels) / h : 0.5;
+
+  // Lighting uniformity metrics — only meaningful when we have enough skin pixels
+  let skinLumStdDev = 0;
+  let skinLeftRightDiff = 0;
+  if (skinPixels > 500) {
+    const mean = skinLuminance;
+    const variance = Math.max(0, skinLumSqSum / skinPixels - mean * mean);
+    skinLumStdDev = Math.sqrt(variance);
+    if (skinLeftCount > 100 && skinRightCount > 100) {
+      const leftMean = skinLeftLumSum / skinLeftCount;
+      const rightMean = skinRightLumSum / skinRightCount;
+      skinLeftRightDiff = Math.abs(leftMean - rightMean);
+    }
+  }
 
   // Colour cast: compare highlight RGB ratios to perfect-grey (1:1:1)
   let colourCast: QualityReport["metrics"]["colourCast"] = "neutral";
@@ -250,6 +279,22 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
         });
       }
     }
+
+    // Uneven lighting on face — common cause of inaccurate season classification.
+    // Two checks:
+    //   1. Left/right asymmetry > 25 (out of 255) → side-lit (one cheek brighter)
+    //   2. Overall std-dev > 50 → harsh shadows / spotty lighting
+    if (skinLeftRightDiff > 38) {
+      issues.push({
+        severity: "warn",
+        message: "Lighting is uneven across your face (one side brighter). Face the light source directly.",
+      });
+    } else if (skinLumStdDev > 55) {
+      issues.push({
+        severity: "warn",
+        message: "Harsh shadows on your face affect accuracy. Try softer, more even lighting.",
+      });
+    }
   }
 
   // Final severity: block > warn > ok
@@ -266,6 +311,8 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
       avgLuminance,
       centerLuminance,
       skinLuminance,
+      skinLumStdDev,
+      skinLeftRightDiff,
       colourCast,
       castStrength,
       skinPixelRatio,
@@ -290,6 +337,8 @@ function defaultMetrics(): QualityReport["metrics"] {
     avgLuminance: 128,
     centerLuminance: 128,
     skinLuminance: 128,
+    skinLumStdDev: 0,
+    skinLeftRightDiff: 0,
     colourCast: "neutral",
     castStrength: 0,
     skinPixelRatio: 0,

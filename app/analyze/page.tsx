@@ -479,6 +479,77 @@ export default function AnalyzePage() {
       <Navbar />
 
       <main className="flex-1 max-w-lg mx-auto w-full px-6 py-12">
+        {/* Feedback chips — pinned to top so issues are visible without scrolling */}
+        {(errorMsg || stage === "error") && (
+          <div className="mb-6 flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium">Couldn't complete analysis</p>
+              <p className="mt-0.5 text-red-600">{errorMsg}</p>
+              <button
+                onClick={() => { setStage("upload"); setErrorMsg(""); }}
+                className="mt-2 underline text-xs"
+              >
+                Try again
+              </button>
+            </div>
+          </div>
+        )}
+
+        {preview && quality && quality.severity !== "ok" && (
+          <div
+            className={cn(
+              "mb-6 flex items-start gap-3 p-4 rounded-xl border text-sm",
+              quality.severity === "block"
+                ? "bg-red-50 border-red-200 text-red-700"
+                : "bg-amber-50 border-amber-200 text-amber-800"
+            )}
+          >
+            {quality.severity === "block" ? (
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            ) : (
+              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            )}
+            <div className="flex-1">
+              <p className="font-semibold">
+                {quality.severity === "block"
+                  ? "Photo can't be analysed"
+                  : "Photo quality could be better"}
+              </p>
+              <ul className="mt-1 space-y-1">
+                {quality.issues.map((issue, i) => (
+                  <li key={i} className={quality.severity === "block" ? "text-red-700" : "text-amber-700"}>
+                    {issue.message}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-3 flex gap-4">
+                <button
+                  onClick={() => setPreview(null)}
+                  className="underline text-xs font-medium"
+                >
+                  Try a different photo
+                </button>
+                {quality.severity === "warn" && !ignoreWarning && (
+                  <button
+                    onClick={() => setIgnoreWarning(true)}
+                    className="underline text-xs"
+                  >
+                    Use anyway
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {preview && quality && quality.severity === "ok" && !checking && (
+          <div className="mb-6 flex items-center gap-2 p-3 rounded-xl bg-[var(--c-success)]/10 border border-[var(--c-success)]/30 text-[var(--c-success)] text-xs font-medium">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            Photo looks good for analysis
+          </div>
+        )}
+
         <div className="text-center mb-10">
           <h1 className="font-display text-3xl font-bold text-[var(--c-ink)] mb-2">
             Upload your selfie
@@ -601,23 +672,6 @@ export default function AnalyzePage() {
           }}
         />
 
-        {/* Error */}
-        {(errorMsg || stage === "error") && (
-          <div className="mt-4 flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
-            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium">Couldn't complete analysis</p>
-              <p className="mt-0.5 text-red-600">{errorMsg}</p>
-              <button
-                onClick={() => { setStage("upload"); setErrorMsg(""); }}
-                className="mt-2 underline text-xs"
-              >
-                Try again
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Tips */}
         <div className="mt-6 p-4 rounded-xl bg-[var(--c-surface)] border border-[var(--c-line)]">
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-soft)] mb-3">
@@ -637,59 +691,6 @@ export default function AnalyzePage() {
             ))}
           </ul>
         </div>
-
-        {/* Quality feedback (hard-block or soft-warn) */}
-        {preview && quality && quality.severity !== "ok" && (
-          <div
-            className={cn(
-              "mt-6 flex items-start gap-3 p-4 rounded-xl border text-sm",
-              quality.severity === "block"
-                ? "bg-red-50 border-red-200 text-red-700"
-                : "bg-amber-50 border-amber-200 text-amber-800"
-            )}
-          >
-            {quality.severity === "block" ? (
-              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-            ) : (
-              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-            )}
-            <div className="flex-1">
-              <p className="font-semibold">
-                {quality.severity === "block"
-                  ? "Photo can't be analysed"
-                  : "Photo quality could be better"}
-              </p>
-              <ul className="mt-1 space-y-1">
-                {quality.issues.map((issue, i) => (
-                  <li key={i} className={quality.severity === "block" ? "text-red-700" : "text-amber-700"}>
-                    {issue.message}
-                  </li>
-                ))}
-              </ul>
-              <button
-                onClick={() => setPreview(null)}
-                className="mt-3 underline text-xs font-medium"
-              >
-                Try a different photo
-              </button>
-              {quality.severity === "warn" && !ignoreWarning && (
-                <button
-                  onClick={() => setIgnoreWarning(true)}
-                  className="mt-3 ml-4 underline text-xs"
-                >
-                  Use anyway
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {preview && quality && quality.severity === "ok" && !checking && (
-          <div className="mt-6 flex items-center gap-2 p-3 rounded-xl bg-[var(--c-success)]/10 border border-[var(--c-success)]/30 text-[var(--c-success)] text-xs font-medium">
-            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-            Photo looks good for analysis
-          </div>
-        )}
 
         {/* Analyse button */}
         {preview && (
