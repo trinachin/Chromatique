@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
+import { CameraModal } from "@/components/CameraModal";
 import { Upload, Camera, X, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +19,16 @@ export default function AnalyzePage() {
   const [dragOver, setDragOver] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [analysisStep, setAnalysisStep] = useState(0);
+  const [showCameraModal, setShowCameraModal] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  // Detect desktop on mount — desktop "Take a photo" opens the webcam modal,
+  // mobile uses the native input[capture] which triggers the system camera app.
+  useEffect(() => {
+    const isMobileUA = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isTouchPrimary = window.matchMedia?.("(pointer: coarse)").matches ?? false;
+    setIsDesktop(!isMobileUA && !isTouchPrimary);
+  }, []);
 
   const STEPS = [
     "Reading skin undertone…",
@@ -224,16 +235,32 @@ export default function AnalyzePage() {
           className="sr-only"
         />
 
-        {/* Camera button on mobile */}
+        {/* Take a photo — desktop opens webcam modal, mobile uses native input[capture] */}
         {!preview && (
           <button
-            onClick={() => cameraInputRef.current?.click()}
+            onClick={() => {
+              if (isDesktop) {
+                setShowCameraModal(true);
+              } else {
+                cameraInputRef.current?.click();
+              }
+            }}
             className="mt-3 w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-[var(--c-line)] text-sm text-[var(--c-ink-soft)] hover:bg-[var(--c-sand)] transition-colors"
           >
             <Camera className="w-4 h-4" />
             Take a photo
           </button>
         )}
+
+        {/* Desktop webcam capture modal */}
+        <CameraModal
+          open={showCameraModal}
+          onClose={() => setShowCameraModal(false)}
+          onCapture={(dataUrl) => {
+            setPreview(dataUrl);
+            setErrorMsg("");
+          }}
+        />
 
         {/* Error */}
         {(errorMsg || stage === "error") && (
