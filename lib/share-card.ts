@@ -1,5 +1,5 @@
 import type { ColourResult } from "./types";
-import { SEASON_DESCRIPTIONS, SEASON_FAMILY_ACCENT } from "./season-data";
+import { getSeasonProfile, SEASON_FAMILY_ACCENT } from "./seasons";
 
 // Renders the result to a 1080x1350 portrait card (Instagram-friendly).
 // Returns a Promise<Blob> (PNG) suitable for download or navigator.share.
@@ -23,7 +23,7 @@ export async function generateShareCard(result: ColourResult): Promise<Blob> {
   }
 
   const familyAccent = SEASON_FAMILY_ACCENT[result.seasonFamily] ?? "#C2683B";
-  const description = SEASON_DESCRIPTIONS[result.season] ?? "";
+  const description = getSeasonProfile(result.season)?.description ?? "";
   const BG = "#F6F1EA";
   const INK = "#1F1B16";
   const INK_SOFT = "#6B6258";

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ShareDialog } from "@/components/ShareDialog";
 import { RefreshCw, AlertTriangle, Sparkles, Leaf, Share2 } from "lucide-react";
 import type { ColourResult } from "@/lib/types";
-import { SEASON_DESCRIPTIONS, SEASON_FAMILY_ACCENT } from "@/lib/season-data";
+import { getSeasonProfile, SEASON_FAMILY_ACCENT } from "@/lib/seasons";
 import { cn } from "@/lib/utils";
 
 export default function ResultPage() {
@@ -35,7 +35,7 @@ export default function ResultPage() {
   if (!result) return null;
 
   const familyAccent = SEASON_FAMILY_ACCENT[result.seasonFamily] ?? "var(--c-accent)";
-  const description = SEASON_DESCRIPTIONS[result.season] ?? `You radiate in ${result.season} colours.`;
+  const description = getSeasonProfile(result.season)?.description ?? `You radiate in ${result.season} colours.`;
   const undertoneLabel = { warm: "Warm", cool: "Cool", neutral: "Neutral" }[result.undertone];
   const lowConfidence = result.confidence < 0.5;
 
