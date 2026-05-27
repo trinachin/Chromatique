@@ -84,16 +84,6 @@ export default function ResultPage() {
           <div className="flex justify-center gap-3 flex-wrap">
             <Pill label={`${result.seasonFamily} family`} color={familyAccent} />
             <Pill label={`${undertoneLabel} undertone`} color={familyAccent} />
-            {result.aggregation && (
-              <Pill
-                label={
-                  result.aggregation.agreement === 1
-                    ? `Confirmed by ${result.aggregation.inputCount} photos`
-                    : `${result.aggregation.inputCount}-photo aggregate`
-                }
-                color={familyAccent}
-              />
-            )}
           </div>
         </section>
 
@@ -101,7 +91,7 @@ export default function ResultPage() {
         <section>
           <SectionHeader icon={<Sparkles className="w-4 h-4" />} title="Your palette" />
           <p className="text-sm text-[var(--c-ink-soft)] mb-6">
-            These colours work with your natural colouring to make you glow.
+            Colours that make you glow.
           </p>
           <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
             {result.palette.map((swatch, i) => (
