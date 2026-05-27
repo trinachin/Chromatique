@@ -6,7 +6,8 @@ import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { ColourSwatch } from "@/components/ColourSwatch";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, AlertTriangle, Sparkles, Leaf, ChevronRight } from "lucide-react";
+import { ShareDialog } from "@/components/ShareDialog";
+import { RefreshCw, AlertTriangle, Sparkles, Leaf, Share2 } from "lucide-react";
 import type { ColourResult } from "@/lib/types";
 import { SEASON_DESCRIPTIONS, SEASON_FAMILY_ACCENT } from "@/lib/season-data";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ export default function ResultPage() {
   const router = useRouter();
   const [result, setResult] = useState<ColourResult | null>(null);
   const [ready, setReady] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     const raw = sessionStorage.getItem("chromatique_result");
@@ -180,14 +182,10 @@ export default function ResultPage() {
           <Button
             size="md"
             className="flex-1 gap-2"
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({ title: `My colour season is ${result.season}`, url: window.location.href });
-              }
-            }}
+            onClick={() => setShareOpen(true)}
           >
+            <Share2 className="w-4 h-4" />
             Share my result
-            <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
       </main>
@@ -197,6 +195,14 @@ export default function ResultPage() {
           Your photo was analysed and immediately discarded. We never store or train on it.
         </div>
       </footer>
+
+      {/* Share dialog */}
+      <ShareDialog
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        result={result}
+        url={typeof window !== "undefined" ? `${window.location.origin}/` : "https://chromatique-trina1.vercel.app/"}
+      />
     </div>
   );
 }
