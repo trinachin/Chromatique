@@ -7,7 +7,7 @@ import { Navbar } from "@/components/Navbar";
 import { ColourSwatch } from "@/components/ColourSwatch";
 import { Button } from "@/components/ui/button";
 import { ShareDialog } from "@/components/ShareDialog";
-import { RefreshCw, AlertTriangle, Sparkles, Leaf, Share2 } from "lucide-react";
+import { RefreshCw, AlertTriangle, Sparkles, Share2 } from "lucide-react";
 import type { ColourResult } from "@/lib/types";
 import { getSeasonProfile, SEASON_FAMILY_ACCENT } from "@/lib/seasons";
 import { cn } from "@/lib/utils";
@@ -147,14 +147,6 @@ export default function ResultPage() {
           <section className="bg-[var(--c-surface)] rounded-2xl p-6 border border-[var(--c-line)]">
             <SectionHeader icon={<Sparkles className="w-4 h-4" />} title="Your style note" />
             <p className="text-[var(--c-ink)] leading-relaxed">{result.styleNote}</p>
-          </section>
-        )}
-
-        {/* Fabric note */}
-        {result.fabricNote && (
-          <section className="bg-[var(--c-surface)] rounded-2xl p-6 border border-[var(--c-line)]">
-            <SectionHeader icon={<Leaf className="w-4 h-4 text-[var(--c-success)]" />} title="Fabric guidance" />
-            <p className="text-[var(--c-ink)] leading-relaxed">{result.fabricNote}</p>
           </section>
         )}
 

@@ -105,14 +105,6 @@ not clearly visible: set "confidence" below 0.4 and put a short reason in
 "styleNote". You may still return your best-guess season.
 
 ═══════════════════════════════════════════════════════════════════════════════
-FABRIC NOTE
-═══════════════════════════════════════════════════════════════════════════════
-Include one tropical-climate-aware fabric tip in "fabricNote" (Chromatique
-serves Singapore/SEA; favour breathable fibres: linen, Tencel/lyocell, modal,
-lightweight cotton. Caution on heavy synthetics in heat/humidity.) Tie it to
-their colouring where possible.
-
-═══════════════════════════════════════════════════════════════════════════════
 OUTPUT
 ═══════════════════════════════════════════════════════════════════════════════
 Return ONLY valid minified JSON, no prose, no markdown. The season MUST be
@@ -128,7 +120,6 @@ Schema:
   "seasonFamily": "Spring"|"Summer"|"Autumn"|"Winter",
   "undertone": "warm"|"cool"|"neutral",
   "monkToneBand": string,                 // optional MST band, else ""
-  "fabricNote": string,                   // 1 sentence, tropical-aware
   "styleNote": string,                    // 1-2 sentences, warm and encouraging
   "confidence": number                    // 0.0 to 1.0
 }

@@ -13,7 +13,8 @@ export type ColourResult = {
   monkToneBand?: string;
   palette: ColourSwatch[];
   avoid: ColourSwatch[];
-  fabricNote: string;
+  /** Reserved for the future Fabric module; not populated by colour analysis. */
+  fabricNote?: string;
   styleNote: string;
   confidence: number;
   /** Present when result was aggregated from multiple photos. */
