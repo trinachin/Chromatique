@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { CameraModal } from "@/components/CameraModal";
+import { AdjustablePreview, type AdjustablePreviewHandle } from "@/components/AdjustablePreview";
 import { Upload, Camera, X, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,7 @@ export default function AnalyzePage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const adjustableRef = useRef<AdjustablePreviewHandle>(null);
   const [stage, setStage] = useState<Stage>("upload");
   const [preview, setPreview] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -112,8 +114,19 @@ export default function AnalyzePage() {
     }, 1800);
 
     try {
-      const [, rest] = preview.split(",");
-      const mediaType = preview.split(";")[0].split(":")[1];
+      // Capture the adjusted (panned/zoomed) view if available; otherwise send the
+      // original preview as-is. The adjusted version is what the user actually sees
+      // inside the oval, so Claude analyses the same framing.
+      let imageDataUrl = preview;
+      if (adjustableRef.current) {
+        try {
+          imageDataUrl = await adjustableRef.current.getAdjustedDataUrl();
+        } catch {
+          // fall through to original preview if cropping fails
+        }
+      }
+      const [, rest] = imageDataUrl.split(",");
+      const mediaType = imageDataUrl.split(";")[0].split(":")[1];
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -185,15 +198,10 @@ export default function AnalyzePage() {
           onDrop={onDrop}
         >
           {preview ? (
-            <div className="relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={preview}
-                alt="Your selfie"
-                className="w-full max-h-80 object-cover rounded-2xl"
-              />
+            <div className="relative" onClick={(e) => e.stopPropagation()}>
+              <AdjustablePreview ref={adjustableRef} src={preview} />
 
-              {/* Oval face-frame guide — helps users check alignment before analyse */}
+              {/* Oval face-frame guide — sits ABOVE the adjustable image (non-interactive) */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <svg viewBox="0 0 100 130" preserveAspectRatio="xMidYMid meet" className="h-[85%] w-auto opacity-70">
                   <ellipse
@@ -212,13 +220,13 @@ export default function AnalyzePage() {
 
               {/* Hint label */}
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-[var(--c-ink)]/70 text-white text-[11px] font-medium px-3 py-1.5 rounded-full pointer-events-none">
-                Centre your face in the oval
+                Drag to align · pinch to zoom
               </div>
 
               {/* Remove / retake */}
               <button
                 onClick={(e) => { e.stopPropagation(); setPreview(null); }}
-                className="absolute top-3 right-3 bg-[var(--c-ink)]/70 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-[var(--c-ink)] transition-colors"
+                className="absolute top-3 right-3 bg-[var(--c-ink)]/70 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-[var(--c-ink)] transition-colors z-10"
                 aria-label="Remove photo and retake"
               >
                 <X className="w-4 h-4" />
