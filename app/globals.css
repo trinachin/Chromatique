@@ -1,26 +1,115 @@
 @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@import "tw-animate-css";
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Brand — warm editorial neutrals */
+  --color-bg:          #F6F1EA;
+  --color-surface:     #FFFFFF;
+  --color-ink:         #1F1B16;
+  --color-ink-soft:    #6B6258;
+  --color-accent:      #C2683B;
+  --color-accent-deep: #9E4F2A;
+  --color-sand:        #E7DCCB;
+  --color-olive:       #7E7A5E;
+  --color-line:        #E3D9CC;
+  --color-success:     #5C7A57;
+
+  /* shadcn/ui semantic aliases */
+  --color-background:       var(--color-bg);
+  --color-foreground:       var(--color-ink);
+  --color-card:             var(--color-surface);
+  --color-card-foreground:  var(--color-ink);
+  --color-muted:            var(--color-sand);
+  --color-muted-foreground: var(--color-ink-soft);
+  --color-border:           var(--color-line);
+  --color-primary:          var(--color-accent);
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary:        var(--color-sand);
+  --color-secondary-foreground: var(--color-ink);
+  --color-destructive:      #C0392B;
+
+  --font-display: var(--font-fraunces);
+  --font-sans:    var(--font-hanken);
+
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   16px;
+  --radius-full: 9999px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── CSS custom properties for non-Tailwind use ── */
+:root {
+  --c-bg:          #F6F1EA;
+  --c-surface:     #FFFFFF;
+  --c-ink:         #1F1B16;
+  --c-ink-soft:    #6B6258;
+  --c-accent:      #C2683B;
+  --c-accent-deep: #9E4F2A;
+  --c-sand:        #E7DCCB;
+  --c-olive:       #7E7A5E;
+  --c-line:        #E3D9CC;
+  --c-success:     #5C7A57;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--c-bg);
+  color: var(--c-ink);
+  font-family: var(--font-hanken, ui-sans-serif), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Display headings use Fraunces */
+h1, h2, h3, .font-display {
+  font-family: var(--font-fraunces, Georgia, serif);
+}
+
+/* Shimmer animation for loading state */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
+@keyframes swatch-reveal {
+  from { opacity: 0; transform: scale(0.85) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes colour-wheel-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.8s infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.animate-swatch-reveal {
+  animation: swatch-reveal 0.4s ease-out forwards;
+}
+
+.animate-fade-up {
+  animation: fade-up 0.6s ease-out forwards;
+}
+
+.animate-colour-wheel {
+  animation: colour-wheel-spin 3s linear infinite;
 }
