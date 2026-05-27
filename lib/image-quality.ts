@@ -25,12 +25,15 @@ export interface QualityReport {
   issues: QualityIssue[];
   // Raw measurements (useful for debugging / future tuning)
   metrics: {
-    avgLuminance: number;          // 0-255
-    centerLuminance: number;       // 0-255, weighted to image center
+    avgLuminance: number;          // 0-255 across whole image
+    centerLuminance: number;       // 0-255, Gaussian-weighted toward face area
+    skinLuminance: number;         // 0-255, average over skin pixels only
     colourCast: "warm" | "cool" | "magenta" | "green" | "neutral";
     castStrength: number;          // 0-1
     skinPixelRatio: number;        // 0-1, fraction of pixels that look like skin
     skinInCentralRegion: number;   // 0-1, fraction of skin pixels in central region
+    skinCentroidX: number;         // 0-1, normalised x of skin centroid
+    skinCentroidY: number;         // 0-1, normalised y of skin centroid
   };
 }
 
@@ -71,9 +74,12 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
   let highlightCount = 0;
   const highlightThreshold = 180;
 
-  // Skin-tone counters
+  // Skin-tone counters + centroid + skin luminance
   let skinPixels = 0;
   let skinInCenter = 0;
+  let skinLumSum = 0;
+  let skinXSum = 0;
+  let skinYSum = 0;
   let totalPixels = 0;
 
   // Central rectangle: middle 60% horizontally, upper-middle 60% vertically
@@ -118,6 +124,9 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
         Cr > 133 && Cr < 180;
       if (isSkin) {
         skinPixels++;
+        skinLumSum += lum;
+        skinXSum += x;
+        skinYSum += y;
         if (x >= centerXMin && x <= centerXMax && y >= centerYMin && y <= centerYMax) {
           skinInCenter++;
         }
@@ -127,6 +136,9 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
 
   const avgLuminance = totalLum / totalPixels;
   const centerLuminance = centerLumSum / centerLumWeight;
+  const skinLuminance = skinPixels > 0 ? skinLumSum / skinPixels : avgLuminance;
+  const skinCentroidX = skinPixels > 0 ? (skinXSum / skinPixels) / w : 0.5;
+  const skinCentroidY = skinPixels > 0 ? (skinYSum / skinPixels) / h : 0.5;
 
   // Colour cast: compare highlight RGB ratios to perfect-grey (1:1:1)
   let colourCast: QualityReport["metrics"]["colourCast"] = "neutral";
@@ -160,26 +172,29 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
   const skinInCentralRegion = skinPixels > 0 ? skinInCenter / skinPixels : 0;
 
   // ── Decision tree ────────────────────────────────────────────────────────
+  // Brightness decisions use SKIN luminance (or fall back to centerLuminance)
+  // so a bright background can't make a dim face look "well lit".
+  const brightnessSignal = skinPixels > 500 ? skinLuminance : centerLuminance;
   const issues: QualityIssue[] = [];
 
   // BLOCKING checks
-  if (avgLuminance < 25) {
+  if (brightnessSignal < 50) {
     issues.push({
       severity: "block",
       message: "This photo is too dark to analyse. Try natural daylight or move closer to a window.",
     });
-  } else if (avgLuminance > 240) {
+  } else if (brightnessSignal > 240) {
     issues.push({
       severity: "block",
-      message: "This photo is over-exposed (washed out). Try moving out of direct sun or harsh light.",
+      message: "Your face is over-exposed (washed out). Try moving out of direct sun or harsh light.",
     });
   }
 
   // Face presence heuristic (only block if both skin ratio AND central concentration fail)
-  if (skinPixelRatio < 0.02) {
+  if (skinPixelRatio < 0.025) {
     issues.push({
       severity: "block",
-      message: "We can't see a face in this photo. Please upload a clear selfie with your face centered.",
+      message: "We can't see a face in this photo. Please upload a clear selfie with your face centred.",
     });
   } else if (skinPixelRatio < 0.06 && skinInCentralRegion < 0.5) {
     issues.push({
@@ -190,24 +205,26 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
 
   // WARNING checks (only fire if no blocking issue already)
   if (issues.length === 0) {
-    if (avgLuminance < 70) {
+    // Tightened dim threshold (was 70 — too lenient, missed real indoor-light cases)
+    if (brightnessSignal < 110) {
       issues.push({
         severity: "warn",
-        message: "Lighting is a bit dim — accuracy improves with natural daylight.",
+        message: "Your face looks dim, accuracy improves a lot with brighter natural daylight.",
       });
-    } else if (avgLuminance > 220) {
+    } else if (brightnessSignal > 215) {
       issues.push({
         severity: "warn",
-        message: "Lighting is very bright — accuracy may be affected by glare.",
+        message: "Your face is very bright, glare can throw off the colour read.",
       });
     }
 
-    if (castStrength > 0.18) {
+    // Tightened cast threshold (was 0.18) — most indoor light has noticeable cast
+    if (castStrength > 0.12) {
       const castMsg: Record<typeof colourCast, string> = {
-        warm: "Strong yellow cast detected (indoor light) — natural daylight gives more accurate results.",
-        cool: "Strong blue cast detected — natural daylight gives more accurate results.",
-        magenta: "Strong magenta cast detected (filter or fluorescent light) — try natural daylight without filters.",
-        green: "Strong green cast detected (fluorescent light) — try natural daylight.",
+        warm: "Yellow/warm cast detected (likely indoor light) — natural daylight gives more accurate results.",
+        cool: "Blue/cool cast detected — natural daylight gives more accurate results.",
+        magenta: "Magenta cast detected (filter or fluorescent light) — try natural daylight without filters.",
+        green: "Green cast detected (fluorescent light) — try natural daylight.",
         neutral: "",
       };
       const msg = castMsg[colourCast];
@@ -219,6 +236,19 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
         severity: "warn",
         message: "Your face could be larger in the frame for a better read.",
       });
+    }
+
+    // Face-in-oval check — centroid should sit in middle 50% horizontally and
+    // upper 70% vertically. The on-screen oval covers ~24-76% width, 12-88% height.
+    if (skinPixels > 500) {
+      const horizOff = skinCentroidX < 0.30 || skinCentroidX > 0.70;
+      const vertOff = skinCentroidY < 0.18 || skinCentroidY > 0.78;
+      if (horizOff || vertOff) {
+        issues.push({
+          severity: "warn",
+          message: "Your face isn't centred in the oval, drag the photo to align before analysing.",
+        });
+      }
     }
   }
 
@@ -235,10 +265,13 @@ export async function analyzeImageQuality(dataUrl: string): Promise<QualityRepor
     metrics: {
       avgLuminance,
       centerLuminance,
+      skinLuminance,
       colourCast,
       castStrength,
       skinPixelRatio,
       skinInCentralRegion,
+      skinCentroidX,
+      skinCentroidY,
     },
   };
 }
@@ -256,9 +289,12 @@ function defaultMetrics(): QualityReport["metrics"] {
   return {
     avgLuminance: 128,
     centerLuminance: 128,
+    skinLuminance: 128,
     colourCast: "neutral",
     castStrength: 0,
     skinPixelRatio: 0,
     skinInCentralRegion: 0,
+    skinCentroidX: 0.5,
+    skinCentroidY: 0.5,
   };
 }
