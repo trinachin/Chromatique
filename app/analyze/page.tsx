@@ -196,7 +196,7 @@ export default function AnalyzePage() {
               </div>
               <div>
                 <p className="font-semibold text-[var(--c-ink)] mb-1">
-                  Drag & drop or tap to upload
+                  Tap to upload or take a photo
                 </p>
                 <p className="text-xs text-[var(--c-ink-soft)]">JPG, PNG, WebP · Max 15 MB</p>
               </div>
@@ -260,8 +260,9 @@ export default function AnalyzePage() {
           <ul className="space-y-1.5 text-sm text-[var(--c-ink-soft)]">
             {[
               "Face the light source (window or open sky)",
-              "Remove sunglasses, heavy makeup, or filters",
+              "Remove glasses and heavy makeup",
               "Make sure your face fills most of the frame",
+              "Upload photos with no filters",
             ].map((tip) => (
               <li key={tip} className="flex items-start gap-2">
                 <span className="text-[var(--c-accent)] mt-0.5">·</span>
