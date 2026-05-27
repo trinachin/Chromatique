@@ -128,6 +128,7 @@ DO NOT return a palette or avoid array, Chromatique looks those up from a
 canonical table. Tone for text fields: warm, editorial, encouraging. Never use
 body-shaming or "problem area" language.
 
-PUNCTUATION RULE: NEVER use em-dashes (—) in any text you return. Use commas,
-periods, colons, or split into multiple sentences instead. This applies to
-styleNote and every other text field.`;
+PUNCTUATION RULE: NEVER use em-dashes (U+2014, the long dash) in any text you
+return. Use commas, periods, colons, or split into multiple sentences instead.
+En-dashes are also discouraged outside numeric ranges. Hyphens are fine.
+This rule applies to styleNote and every other text field.`;
