@@ -7,9 +7,10 @@ import { Navbar } from "@/components/Navbar";
 import { ColourSwatch } from "@/components/ColourSwatch";
 import { Button } from "@/components/ui/button";
 import { ShareDialog } from "@/components/ShareDialog";
-import { RefreshCw, AlertTriangle, Sparkles, Share2 } from "lucide-react";
+import { RefreshCw, AlertTriangle, Sparkles, Share2, Download, Gem, Brush, Scissors } from "lucide-react";
 import type { ColourResult } from "@/lib/types";
-import { getSeasonProfile, SEASON_FAMILY_ACCENT } from "@/lib/seasons";
+import { getSeasonProfile, getSeasonDetails, getTaggedPalette, SEASON_FAMILY_ACCENT } from "@/lib/seasons";
+import { generateShareCard } from "@/lib/share-card";
 import { cn } from "@/lib/utils";
 
 export default function ResultPage() {
@@ -38,6 +39,25 @@ export default function ResultPage() {
   const description = getSeasonProfile(result.season)?.description ?? `You radiate in ${result.season} colours.`;
   const undertoneLabel = { warm: "Warm", cool: "Cool", neutral: "Neutral" }[result.undertone];
   const lowConfidence = result.confidence < 0.5;
+  const details = getSeasonDetails(result.season);
+  const taggedPalette = getTaggedPalette(result.season);
+
+  // Save palette as image (download), distinct from social share dialog
+  const handleSavePalette = async () => {
+    try {
+      const blob = await generateShareCard(result);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `chromatique-${result.season.toLowerCase().replace(/\s+/g, "-")}-palette.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      // silently ignore
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--c-bg)]">
@@ -90,21 +110,34 @@ export default function ResultPage() {
         {/* Your palette */}
         <section>
           <SectionHeader icon={<Sparkles className="w-4 h-4" />} title="Your palette" />
-          <p className="text-sm text-[var(--c-ink-soft)] mb-6">
+          <p className="text-sm text-[var(--c-ink-soft)] mb-2">
             Colours that make you glow.
           </p>
+          <p className="text-xs text-[var(--c-ink-soft)]/70 mb-6 flex items-center gap-1.5">
+            <span className="text-[var(--c-accent)]">★</span>
+            <span>Signature colour. Tap any swatch to copy its hex.</span>
+          </p>
           <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
-            {result.palette.map((swatch, i) => (
+            {taggedPalette.map((swatch, i) => (
               <ColourSwatch
                 key={swatch.hex + i}
                 name={swatch.name}
                 hex={swatch.hex}
                 size="lg"
                 delay={i * 60}
+                hero={swatch.tier === "hero"}
               />
             ))}
           </div>
         </section>
+
+        {/* Why these colours work */}
+        {details && (
+          <section className="bg-[var(--c-surface)] rounded-2xl p-6 border border-[var(--c-line)]">
+            <SectionHeader icon={<Sparkles className="w-4 h-4" />} title="Why these colours work" />
+            <p className="text-[var(--c-ink)] leading-relaxed">{details.whyItWorks}</p>
+          </section>
+        )}
 
         {/* Colours to avoid */}
         <section>
@@ -132,6 +165,89 @@ export default function ResultPage() {
           </div>
         </section>
 
+        {/* Metals */}
+        {details && (
+          <section className="bg-[var(--c-surface)] rounded-2xl p-6 border border-[var(--c-line)]">
+            <SectionHeader icon={<Gem className="w-4 h-4" />} title="Your metals" />
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-success)] mb-1.5">Wear</p>
+                <div className="flex flex-wrap gap-2">
+                  {details.metals.best.map((m) => (
+                    <span key={m} className="text-sm px-3 py-1 rounded-full bg-[var(--c-success)]/10 text-[var(--c-ink)]">{m}</span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-red-700 mb-1.5">Avoid</p>
+                <div className="flex flex-wrap gap-2">
+                  {details.metals.avoid.map((m) => (
+                    <span key={m} className="text-sm px-3 py-1 rounded-full bg-red-50 text-[var(--c-ink-soft)]">{m}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Makeup */}
+        {details && (
+          <section className="bg-[var(--c-surface)] rounded-2xl p-6 border border-[var(--c-line)]">
+            <SectionHeader icon={<Brush className="w-4 h-4" />} title="Your makeup" />
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-soft)] mb-1.5">Lipstick</p>
+                <div className="flex flex-wrap gap-2">
+                  {details.makeup.lips.map((m) => (
+                    <span key={m} className="text-sm px-3 py-1 rounded-full bg-[var(--c-sand)] text-[var(--c-ink)]">{m}</span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-soft)] mb-1.5">Blush</p>
+                <div className="flex flex-wrap gap-2">
+                  {details.makeup.blush.map((m) => (
+                    <span key={m} className="text-sm px-3 py-1 rounded-full bg-[var(--c-sand)] text-[var(--c-ink)]">{m}</span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-soft)] mb-1.5">Eyeliner</p>
+                <div className="flex flex-wrap gap-2">
+                  {details.makeup.eyeliner.map((m) => (
+                    <span key={m} className="text-sm px-3 py-1 rounded-full bg-[var(--c-sand)] text-[var(--c-ink)]">{m}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Hair */}
+        {details && (
+          <section className="bg-[var(--c-surface)] rounded-2xl p-6 border border-[var(--c-line)]">
+            <SectionHeader icon={<Scissors className="w-4 h-4" />} title="Best hair colours" />
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-success)] mb-1.5">Flattering</p>
+                <div className="flex flex-wrap gap-2">
+                  {details.hair.best.map((m) => (
+                    <span key={m} className="text-sm px-3 py-1 rounded-full bg-[var(--c-success)]/10 text-[var(--c-ink)]">{m}</span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-red-700 mb-1.5">Less flattering</p>
+                <div className="flex flex-wrap gap-2">
+                  {details.hair.avoid.map((m) => (
+                    <span key={m} className="text-sm px-3 py-1 rounded-full bg-red-50 text-[var(--c-ink-soft)]">{m}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Style note */}
         {result.styleNote && !lowConfidence && (
           <section className="bg-[var(--c-surface)] rounded-2xl p-6 border border-[var(--c-line)]">
@@ -139,6 +255,18 @@ export default function ResultPage() {
             <p className="text-[var(--c-ink)] leading-relaxed">{result.styleNote}</p>
           </section>
         )}
+
+        {/* Save palette for shopping */}
+        <section className="rounded-2xl border border-[var(--c-line)] p-5 bg-[var(--c-sand)]/40 flex items-center justify-between gap-4">
+          <div>
+            <p className="font-display text-base font-semibold text-[var(--c-ink)] mb-0.5">Save your palette</p>
+            <p className="text-xs text-[var(--c-ink-soft)]">Download as an image to reference while shopping.</p>
+          </div>
+          <Button onClick={handleSavePalette} variant="secondary" size="sm" className="gap-2 flex-shrink-0">
+            <Download className="w-4 h-4" />
+            Save
+          </Button>
+        </section>
 
         {/* Coming soon teaser */}
         <section className="rounded-2xl border-2 border-dashed border-[var(--c-line)] p-6">

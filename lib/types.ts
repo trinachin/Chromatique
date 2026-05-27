@@ -1,6 +1,8 @@
 export type ColourSwatch = {
   name: string;
   hex: string;
+  /** Hero = signature/statement colours (typically 2-3 per season). Everyday = wardrobe base. */
+  tier?: "hero" | "everyday";
 };
 
 export type SeasonFamily = "Spring" | "Summer" | "Autumn" | "Winter";

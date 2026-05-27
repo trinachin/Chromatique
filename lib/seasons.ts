@@ -541,3 +541,278 @@ export const SEASON_FAMILY_ACCENT: Record<SeasonFamily, string> = {
   Autumn: "#C2683B",
   Winter: "#3D4565",
 };
+
+// ───────────────────────────────────────────────────────────────────────────
+// EXTENDED DETAILS: metals, makeup, hair, why-it-works, hero swatches.
+// Sourced from House of Colour, 12 Blueprints, The Concept Wardrobe, and
+// standard personal-colour analysis references.
+// ───────────────────────────────────────────────────────────────────────────
+
+export interface MetalsGuidance {
+  best: string[];
+  avoid: string[];
+}
+export interface MakeupGuidance {
+  lips: string[];
+  blush: string[];
+  eyeliner: string[];
+}
+export interface HairGuidance {
+  best: string[];
+  avoid: string[];
+}
+
+export interface SeasonDetails {
+  whyItWorks: string;
+  metals: MetalsGuidance;
+  makeup: MakeupGuidance;
+  hair: HairGuidance;
+  /** Indices into the palette array marking the season's signature hero colours. */
+  heroSwatchIndices: number[];
+}
+
+export const SEASON_DETAILS: Record<SeasonName, SeasonDetails> = {
+  "Light Spring": {
+    whyItWorks: "Your warm undertone glows with soft, light hues that match your delicate colouring. Pastels and golden-warm tints reflect your skin's natural radiance without overwhelming it.",
+    metals: { best: ["Warm gold", "Rose gold", "Light brass"], avoid: ["Heavy silver", "Pewter"] },
+    makeup: {
+      lips: ["Peachy nude", "Soft coral", "Warm pink", "Light warm berry"],
+      blush: ["Soft peach", "Warm pink"],
+      eyeliner: ["Warm brown", "Soft bronze"],
+    },
+    hair: {
+      best: ["Golden blonde", "Honey", "Strawberry blonde", "Light warm brown"],
+      avoid: ["Blue-black", "Ash blonde", "Cool platinum"],
+    },
+    heroSwatchIndices: [2, 3, 5],
+  },
+  "True Spring": {
+    whyItWorks: "Your warm, clear colouring is amplified by golden-toned, fresh hues. The right colours bring out the natural warmth in your skin and the brightness in your eyes.",
+    metals: { best: ["Warm yellow gold", "Copper"], avoid: ["Silver", "Pewter"] },
+    makeup: {
+      lips: ["Warm coral", "Peachy pink", "Light warm red", "Salmon"],
+      blush: ["Peach", "Warm coral"],
+      eyeliner: ["Warm brown", "Bronze"],
+    },
+    hair: {
+      best: ["Warm golden blonde", "Light golden brown", "Copper highlights"],
+      avoid: ["Ash tones", "Blue-black"],
+    },
+    heroSwatchIndices: [3, 4, 5],
+  },
+  "Bright Spring": {
+    whyItWorks: "Your warm undertone with high natural contrast calls for clear, saturated colours. Bright, sparkling hues match the clarity in your features.",
+    metals: { best: ["Bright gold", "Bright silver", "Platinum"], avoid: ["Brushed/antique metals"] },
+    makeup: {
+      lips: ["Bright coral", "Watermelon", "True warm red", "Hot warm pink"],
+      blush: ["Bright coral", "Warm pink"],
+      eyeliner: ["Black-brown", "Bright bronze"],
+    },
+    hair: {
+      best: ["Rich golden brown", "Warm chestnut", "Vibrant warm tones"],
+      avoid: ["Muted/dusty colours", "Ash blonde"],
+    },
+    heroSwatchIndices: [2, 3, 4],
+  },
+  "Warm Spring": {
+    whyItWorks: "Your golden warmth deepens with rich sunlit colours. The right hues echo the honey in your skin and brighten your overall colouring.",
+    metals: { best: ["Warm gold", "Copper", "Bronze"], avoid: ["Silver", "Cool platinum"] },
+    makeup: {
+      lips: ["Warm terracotta", "Warm coral", "Brick red", "Apricot"],
+      blush: ["Warm peach", "Apricot"],
+      eyeliner: ["Warm brown", "Bronze"],
+    },
+    hair: {
+      best: ["Golden honey", "Warm chestnut", "Deep golden brown"],
+      avoid: ["Ash tones", "Cool dark colours"],
+    },
+    heroSwatchIndices: [2, 4, 9],
+  },
+  "Light Summer": {
+    whyItWorks: "Your cool, soft colouring is lifted by gentle, light hues with rosy undertones. Airy tones match your delicate features and brighten your eyes.",
+    metals: { best: ["Silver", "White gold", "Light platinum", "Soft rose gold"], avoid: ["Yellow gold", "Bright copper"] },
+    makeup: {
+      lips: ["Rosy pink", "Soft mauve", "Dusty rose", "Soft berry"],
+      blush: ["Rosy pink", "Soft mauve"],
+      eyeliner: ["Soft grey", "Cool brown"],
+    },
+    hair: {
+      best: ["Ash blonde", "Light cool brown", "Soft mushroom"],
+      avoid: ["Warm golden", "Copper", "Black"],
+    },
+    heroSwatchIndices: [2, 3, 11],
+  },
+  "True Summer": {
+    whyItWorks: "Your cool, soft undertone glows in rosy, dusty hues. The right colours amplify the gentle radiance in your skin without overpowering your refined features.",
+    metals: { best: ["Silver", "White gold", "Platinum"], avoid: ["Yellow gold", "Brass"] },
+    makeup: {
+      lips: ["Rose pink", "Mauve", "Soft berry", "Cool plum"],
+      blush: ["Rose", "Soft mauve"],
+      eyeliner: ["Cool brown", "Soft grey"],
+    },
+    hair: {
+      best: ["Ash blonde", "Cool brown", "Mushroom"],
+      avoid: ["Warm golden tones", "Copper", "Pure black"],
+    },
+    heroSwatchIndices: [1, 2, 6],
+  },
+  "Soft Summer": {
+    whyItWorks: "Your muted, cool colouring is enhanced by dusty, blended tones. Soft hues with low contrast match your subtle elegance.",
+    metals: { best: ["Pewter", "Antique silver", "Brushed metals"], avoid: ["Bright shiny silver", "Yellow gold"] },
+    makeup: {
+      lips: ["Dusty rose", "Soft mauve", "Muted berry", "Soft plum"],
+      blush: ["Dusty rose", "Muted mauve"],
+      eyeliner: ["Soft taupe", "Smoky grey"],
+    },
+    hair: {
+      best: ["Dusty/ash neutral blonde", "Soft cool brown", "Taupe"],
+      avoid: ["Bright warm tones", "High-contrast highlights"],
+    },
+    heroSwatchIndices: [1, 4, 11],
+  },
+  "Cool Summer": {
+    whyItWorks: "Your clean cool undertone with moderate contrast suits clear, refreshing colours. The right hues bring out the crispness in your features.",
+    metals: { best: ["Silver", "White gold", "Platinum"], avoid: ["Yellow gold", "Brass"] },
+    makeup: {
+      lips: ["Cool rose", "Plum", "Berry", "Cool red"],
+      blush: ["Cool pink", "Berry"],
+      eyeliner: ["Cool brown", "Charcoal"],
+    },
+    hair: {
+      best: ["Ash brown", "Cool dark blonde", "No warm highlights"],
+      avoid: ["Warm golden tones", "Copper"],
+    },
+    heroSwatchIndices: [2, 3, 8],
+  },
+  "Soft Autumn": {
+    whyItWorks: "Your warm, muted colouring blends beautifully with earthy, blended tones. Soft warm hues echo the gentle gold in your skin.",
+    metals: { best: ["Matte gold", "Brushed bronze", "Antique copper"], avoid: ["Bright shiny silver", "Cool platinum"] },
+    makeup: {
+      lips: ["Muted terracotta", "Soft brown-red", "Brick rose", "Warm nude"],
+      blush: ["Soft peach", "Muted terracotta"],
+      eyeliner: ["Warm brown", "Bronze"],
+    },
+    hair: {
+      best: ["Muted warm brown", "Dusty golden brown", "Soft chestnut"],
+      avoid: ["Bright copper", "Cool ash tones", "Black"],
+    },
+    heroSwatchIndices: [3, 5, 9],
+  },
+  "True Autumn": {
+    whyItWorks: "Your warm, deep colouring is amplified by rich, earthy hues. Golden and russet tones bring out the natural warmth in your skin and hair.",
+    metals: { best: ["Yellow gold", "Bronze", "Copper"], avoid: ["Silver", "White gold"] },
+    makeup: {
+      lips: ["Deep warm red", "Rust", "Terracotta", "Brick"],
+      blush: ["Warm bronze", "Terracotta"],
+      eyeliner: ["Warm brown", "Bronze"],
+    },
+    hair: {
+      best: ["Rich auburn", "Copper", "Warm chestnut", "Golden brown"],
+      avoid: ["Ash tones", "Blue-black", "Cool platinum"],
+    },
+    heroSwatchIndices: [2, 3, 6],
+  },
+  "Warm Autumn": {
+    whyItWorks: "Your rich, golden colouring deepens with spice-toned, sunlit hues. The right colours echo the warmth and depth in your features.",
+    metals: { best: ["Deep gold", "Copper", "Bronze"], avoid: ["Silver", "Cool platinum"] },
+    makeup: {
+      lips: ["Deep warm red", "Brick", "Mahogany", "Copper-red"],
+      blush: ["Warm bronze", "Russet"],
+      eyeliner: ["Dark warm brown", "Bronze"],
+    },
+    hair: {
+      best: ["Deep auburn", "Warm chestnut", "Rich copper", "Dark warm brown"],
+      avoid: ["Cool ash tones", "Platinum"],
+    },
+    heroSwatchIndices: [2, 4, 10],
+  },
+  "Deep Autumn": {
+    whyItWorks: "Your dark, warm colouring commands attention in bold, earthy depth. Rich tones match the intensity of your features.",
+    metals: { best: ["Antique gold", "Dark bronze", "Copper"], avoid: ["Bright silver", "Light pastel metals"] },
+    makeup: {
+      lips: ["Deep red", "Burgundy", "Plum", "Brick"],
+      blush: ["Warm berry", "Russet"],
+      eyeliner: ["Dark brown", "Bronze-black"],
+    },
+    hair: {
+      best: ["Deep warm brown", "Dark auburn", "Espresso with warm tones"],
+      avoid: ["Ash highlights", "Cool platinum"],
+    },
+    heroSwatchIndices: [2, 4, 8],
+  },
+  "Bright Winter": {
+    whyItWorks: "Your cool undertone with high natural contrast comes alive in clear, brilliant hues. Sparkling colours match the clarity in your features.",
+    metals: { best: ["Bright silver", "Bright gold", "Platinum"], avoid: ["Brushed/antique metals", "Muted gold"] },
+    makeup: {
+      lips: ["Hot pink", "Fuchsia", "True red", "Magenta", "Berry"],
+      blush: ["Cool pink", "Bright berry"],
+      eyeliner: ["Black", "Charcoal"],
+    },
+    hair: {
+      best: ["Rich dark brown", "Blue-black", "Cool dark tones"],
+      avoid: ["Warm golden tones", "Muted ash"],
+    },
+    heroSwatchIndices: [2, 3, 6],
+  },
+  "True Winter": {
+    whyItWorks: "Your pure, cool, high-contrast colouring electrifies in vivid icy hues. Clean, jewel-bright tones match the drama in your features.",
+    metals: { best: ["Silver", "Platinum", "White gold"], avoid: ["Yellow gold", "Copper"] },
+    makeup: {
+      lips: ["True red", "Berry", "Wine", "Plum", "Fuchsia"],
+      blush: ["Cool pink", "Berry"],
+      eyeliner: ["Black", "Charcoal"],
+    },
+    hair: {
+      best: ["Blue-black", "Cool dark brown", "True black", "Platinum (for grey)"],
+      avoid: ["Warm golden", "Copper", "Honey"],
+    },
+    heroSwatchIndices: [2, 3, 6],
+  },
+  "Cool Winter": {
+    whyItWorks: "Your clean cool undertone with refined contrast shines in jewel and ice tones. The right colours bring crispness to your features.",
+    metals: { best: ["Silver", "Platinum", "Gunmetal"], avoid: ["Yellow gold", "Copper"] },
+    makeup: {
+      lips: ["Berry", "Plum", "True cool red", "Raspberry"],
+      blush: ["Cool pink", "Plum"],
+      eyeliner: ["Charcoal", "Cool brown"],
+    },
+    hair: {
+      best: ["Cool dark brown", "Ash dark", "Blue-black", "Cool platinum"],
+      avoid: ["Warm golden tones", "Copper highlights"],
+    },
+    heroSwatchIndices: [2, 5, 7],
+  },
+  "Deep Winter": {
+    whyItWorks: "Your dark, cool colouring commands attention in dramatic, jewel-bright tones. Deep saturated colours match the power in your features.",
+    metals: { best: ["Silver", "Platinum", "Gunmetal", "White gold"], avoid: ["Yellow gold", "Copper", "Rose gold"] },
+    makeup: {
+      lips: ["Deep red", "Burgundy", "Wine", "Plum", "True red"],
+      blush: ["Cool berry", "Plum"],
+      eyeliner: ["Black", "Charcoal"],
+    },
+    hair: {
+      best: ["Blue-black", "True black", "Cool dark brown", "Cool espresso"],
+      avoid: ["Warm golden highlights", "Honey", "Copper"],
+    },
+    heroSwatchIndices: [1, 2, 6],
+  },
+};
+
+export function getSeasonDetails(name: string): SeasonDetails | null {
+  return isSeasonName(name) ? SEASON_DETAILS[name] : null;
+}
+
+/**
+ * Returns the palette with `tier` populated based on heroSwatchIndices for the season.
+ * Hero indices get `tier: "hero"`, everything else `tier: "everyday"`.
+ */
+export function getTaggedPalette(name: string): ColourSwatch[] {
+  const profile = getSeasonProfile(name);
+  const details = getSeasonDetails(name);
+  if (!profile) return [];
+  if (!details) return profile.palette.map((s) => ({ ...s, tier: "everyday" as const }));
+  return profile.palette.map((s, i) => ({
+    ...s,
+    tier: details.heroSwatchIndices.includes(i) ? "hero" : "everyday",
+  }));
+}
