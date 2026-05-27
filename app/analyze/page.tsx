@@ -683,6 +683,7 @@ export default function AnalyzePage() {
               "Remove glasses and heavy makeup",
               "Make sure your face fills most of the frame",
               "Upload photos with no filters",
+              "Skin conditions don't affect your result — we read your underlying undertone, not surface marks",
             ].map((tip) => (
               <li key={tip} className="flex items-start gap-2">
                 <span className="text-[var(--c-accent)] mt-0.5">·</span>

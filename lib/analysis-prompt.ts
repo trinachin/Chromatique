@@ -68,6 +68,26 @@ STEP 5 — MAP to one of 16 seasons using this table
     Deep Winter    = cool + very deep + medium-to-bright + high contrast (autumn-leaning)
 
 ═══════════════════════════════════════════════════════════════════════════════
+SKIN CONDITION HANDLING (read this before classifying)
+═══════════════════════════════════════════════════════════════════════════════
+Read undertone from the CLEAREST, MOST EVENLY-PIGMENTED skin areas, typically
+the forehead, jawline, neck under the jaw, or temples. Explicitly DISCOUNT
+these temporary or local surface features when assessing undertone or depth:
+
+  - Active acne, inflammation, post-inflammatory hyperpigmentation (PIH)
+  - Hyperpigmentation, melasma, sun spots, freckles
+  - Rosacea, flushing, or transient redness (heat / exercise / skincare reactions)
+  - Dark circles, scarring
+  - Visible makeup residue (foundation, blush, bronzer)
+  - Vitiligo or other depigmented patches
+  - Tan lines or recent sun exposure
+
+These reflect the person's CURRENT SURFACE, not their underlying colour season.
+Base your classification on the uniform UNDERLYING TONE visible in the clearest
+patches of skin, not on surface conditions. Think like a professional colour
+analyst: look past makeup and blemishes to the true skin tone beneath.
+
+═══════════════════════════════════════════════════════════════════════════════
 TIE-BREAKERS (use only when two seasons feel close)
 ═══════════════════════════════════════════════════════════════════════════════
   • Asian/SEA skin with dark hair + warm undercast + medium depth   → most often True/Warm AUTUMN or Deep WINTER
