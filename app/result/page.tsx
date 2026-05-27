@@ -7,6 +7,7 @@ import { Navbar } from "@/components/Navbar";
 import { ColourSwatch } from "@/components/ColourSwatch";
 import { Button } from "@/components/ui/button";
 import { ShareDialog } from "@/components/ShareDialog";
+import { MaterialChip } from "@/components/MaterialChip";
 import { RefreshCw, AlertTriangle, Sparkles, Share2, Download, Gem, Brush, Scissors } from "lucide-react";
 import type { ColourResult } from "@/lib/types";
 import { getSeasonProfile, getSeasonDetails, getTaggedPalette, SEASON_FAMILY_ACCENT } from "@/lib/seasons";
@@ -171,18 +172,18 @@ export default function ResultPage() {
             <SectionHeader icon={<Gem className="w-4 h-4" />} title="Your metals" />
             <div className="space-y-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-success)] mb-1.5">Wear</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-success)] mb-2">Wear</p>
                 <div className="flex flex-wrap gap-2">
                   {details.metals.best.map((m) => (
-                    <span key={m} className="text-sm px-3 py-1 rounded-full bg-[var(--c-success)]/10 text-[var(--c-ink)]">{m}</span>
+                    <MaterialChip key={m} label={m} category="metal" />
                   ))}
                 </div>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-red-700 mb-1.5">Avoid</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-red-700 mb-2">Avoid</p>
                 <div className="flex flex-wrap gap-2">
                   {details.metals.avoid.map((m) => (
-                    <span key={m} className="text-sm px-3 py-1 rounded-full bg-red-50 text-[var(--c-ink-soft)]">{m}</span>
+                    <MaterialChip key={m} label={m} category="metal" muted />
                   ))}
                 </div>
               </div>
@@ -196,26 +197,26 @@ export default function ResultPage() {
             <SectionHeader icon={<Brush className="w-4 h-4" />} title="Your makeup" />
             <div className="space-y-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-soft)] mb-1.5">Lipstick</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-soft)] mb-2">Lipstick</p>
                 <div className="flex flex-wrap gap-2">
                   {details.makeup.lips.map((m) => (
-                    <span key={m} className="text-sm px-3 py-1 rounded-full bg-[var(--c-sand)] text-[var(--c-ink)]">{m}</span>
+                    <MaterialChip key={m} label={m} category="lipstick" />
                   ))}
                 </div>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-soft)] mb-1.5">Blush</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-soft)] mb-2">Blush</p>
                 <div className="flex flex-wrap gap-2">
                   {details.makeup.blush.map((m) => (
-                    <span key={m} className="text-sm px-3 py-1 rounded-full bg-[var(--c-sand)] text-[var(--c-ink)]">{m}</span>
+                    <MaterialChip key={m} label={m} category="blush" />
                   ))}
                 </div>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-soft)] mb-1.5">Eyeliner</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-soft)] mb-2">Eyeliner</p>
                 <div className="flex flex-wrap gap-2">
                   {details.makeup.eyeliner.map((m) => (
-                    <span key={m} className="text-sm px-3 py-1 rounded-full bg-[var(--c-sand)] text-[var(--c-ink)]">{m}</span>
+                    <MaterialChip key={m} label={m} category="eyeliner" />
                   ))}
                 </div>
               </div>
@@ -229,18 +230,18 @@ export default function ResultPage() {
             <SectionHeader icon={<Scissors className="w-4 h-4" />} title="Best hair colours" />
             <div className="space-y-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-success)] mb-1.5">Flattering</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-success)] mb-2">Flattering</p>
                 <div className="flex flex-wrap gap-2">
                   {details.hair.best.map((m) => (
-                    <span key={m} className="text-sm px-3 py-1 rounded-full bg-[var(--c-success)]/10 text-[var(--c-ink)]">{m}</span>
+                    <MaterialChip key={m} label={m} category="hair" />
                   ))}
                 </div>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-red-700 mb-1.5">Less flattering</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-red-700 mb-2">Less flattering</p>
                 <div className="flex flex-wrap gap-2">
                   {details.hair.avoid.map((m) => (
-                    <span key={m} className="text-sm px-3 py-1 rounded-full bg-red-50 text-[var(--c-ink-soft)]">{m}</span>
+                    <MaterialChip key={m} label={m} category="hair" muted />
                   ))}
                 </div>
               </div>
