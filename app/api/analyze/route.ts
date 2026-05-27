@@ -4,7 +4,7 @@ import { ANALYSIS_PROMPT } from "@/lib/analysis-prompt";
 import type { ColourResult } from "@/lib/types";
 
 // Claude vision on a real photo typically takes 8–20s. Default Vercel function
-// timeout is 10s on Hobby — extend so analysis doesn't get cut off mid-call.
+// timeout is 10s on Hobby, extend so analysis doesn't get cut off mid-call.
 export const maxDuration = 60;
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });

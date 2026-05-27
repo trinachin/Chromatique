@@ -25,7 +25,7 @@ export default function HomePage() {
           </h1>
 
           <p className="text-base sm:text-lg text-[var(--c-ink-soft)] max-w-xl mx-auto leading-relaxed mb-10">
-            Upload a selfie. Get your personal colour season, a curated palette, and fabric guidance — beautifully tailored to you.
+            Upload a selfie. Get your personal colour season, a curated palette, and fabric guidance, beautifully tailored to you.
           </p>
 
           <Link href="/analyze">
@@ -101,7 +101,7 @@ export default function HomePage() {
             <ComingSoonCard
               icon="🪞"
               title="Body Type Analysis"
-              description="Discover your body shape and the silhouettes that celebrate it — respectful, inclusive, and actionable."
+              description="Discover your body shape and the silhouettes that celebrate it. Respectful, inclusive, and actionable."
             />
             <ComingSoonCard
               icon="📐"
@@ -111,7 +111,7 @@ export default function HomePage() {
             <ComingSoonCard
               icon="🌿"
               title="Fabric & Climate Guide"
-              description="Tropical-smart fabric picks for Singapore and SEA — linen, Tencel, and more, matched to the humidity."
+              description="Tropical-smart fabric picks for Singapore and SEA. Linen, Tencel, and more, matched to the humidity."
             />
             <ComingSoonCard
               icon="🛍️"
@@ -128,7 +128,7 @@ export default function HomePage() {
               Ready to find your colours?
             </h2>
             <p className="text-white/70 mb-8 max-w-md mx-auto text-sm">
-              Free, private, and takes less than a minute. Your photo is analysed and immediately discarded — we never store it or train on it.
+              Free, private, and takes less than a minute. Your photo is analysed and immediately discarded. Never stored. Never trained on.
             </p>
             <Link href="/analyze">
               <Button className="bg-white! text-[var(--c-ink)]! hover:bg-[var(--c-sand)]!" size="lg">

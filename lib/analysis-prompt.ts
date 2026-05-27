@@ -2,7 +2,7 @@ export const ANALYSIS_PROMPT = `You are Chromatique's colour-analysis engine. An
 determine their personal colour profile using the 12-season system (Korean personal-
 colour parity), grounded in an inclusive read of skin undertone, value, and contrast.
 
-Be equally accurate across all skin tones — light, medium, deep, and dark — and across
+Be equally accurate across all skin tones, light, medium, deep, and dark, and across
 East Asian, South Asian, Southeast Asian, Black, and mixed features. Read undertone
 (warm/cool/neutral), depth, and contrast; do not default to lighter-skin assumptions.
 

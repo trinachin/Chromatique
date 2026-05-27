@@ -22,7 +22,7 @@ export default function AnalyzePage() {
   const [showCameraModal, setShowCameraModal] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
 
-  // Detect desktop on mount — desktop "Take a photo" opens the webcam modal,
+  // Detect desktop on mount, desktop "Take a photo" opens the webcam modal,
   // mobile uses the native input[capture] which triggers the system camera app.
   useEffect(() => {
     const isMobileUA = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -77,7 +77,7 @@ export default function AnalyzePage() {
       return;
     }
     if (file.size > 25 * 1024 * 1024) {
-      setErrorMsg("Photo too large — please use a file under 25 MB.");
+      setErrorMsg("Photo too large, please use a file under 25 MB.");
       return;
     }
     try {
@@ -215,7 +215,7 @@ export default function AnalyzePage() {
           )}
         </div>
 
-        {/* Default file input — no capture attribute, so iOS shows action sheet
+        {/* Default file input, no capture attribute, so iOS shows action sheet
             (Take Photo / Choose from Library / Browse Files) */}
         <input
           ref={fileInputRef}
@@ -235,7 +235,7 @@ export default function AnalyzePage() {
           className="sr-only"
         />
 
-        {/* Take a photo — desktop opens webcam modal, mobile uses native input[capture] */}
+        {/* Take a photo, desktop opens webcam modal, mobile uses native input[capture] */}
         {!preview && (
           <button
             onClick={() => {

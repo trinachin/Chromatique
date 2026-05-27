@@ -82,7 +82,6 @@ export default function ResultPage() {
           <div className="flex justify-center gap-3 flex-wrap">
             <Pill label={`${result.seasonFamily} family`} color={familyAccent} />
             <Pill label={`${undertoneLabel} undertone`} color={familyAccent} />
-            {result.monkToneBand && <Pill label={`Monk: ${result.monkToneBand}`} color={familyAccent} />}
           </div>
         </section>
 
@@ -112,7 +111,7 @@ export default function ResultPage() {
             title="Colours to avoid"
           />
           <p className="text-sm text-[var(--c-ink-soft)] mb-6">
-            These clash with your undertone — worth skipping near your face.
+            These clash with your undertone, worth skipping near your face.
           </p>
           <div className="flex flex-wrap gap-4">
             {result.avoid.map((swatch, i) => (

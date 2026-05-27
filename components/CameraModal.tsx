@@ -84,7 +84,7 @@ export function CameraModal({ open, onClose, onCapture }: CameraModalProps) {
     const h = video.videoHeight;
     if (!w || !h) return;
 
-    // Resize on capture — max 1024 longest edge for /api/analyze compatibility
+    // Resize on capture, max 1024 longest edge for /api/analyze compatibility
     const MAX_EDGE = 1024;
     let cw = w;
     let ch = h;
