@@ -6,8 +6,9 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { CameraModal } from "@/components/CameraModal";
 import { AdjustablePreview, type AdjustablePreviewHandle } from "@/components/AdjustablePreview";
-import { Upload, Camera, X, AlertCircle, Loader2 } from "lucide-react";
+import { Upload, Camera, X, AlertCircle, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { analyzeImageQuality, type QualityReport } from "@/lib/image-quality";
 
 type Stage = "upload" | "analysing" | "error";
 
@@ -23,6 +24,9 @@ export default function AnalyzePage() {
   const [analysisStep, setAnalysisStep] = useState(0);
   const [showCameraModal, setShowCameraModal] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
+  const [quality, setQuality] = useState<QualityReport | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [ignoreWarning, setIgnoreWarning] = useState(false);
 
   // Desktop "Take a photo" opens the webcam modal; mobile uses the native
   // input[capture] which triggers the system camera app instead.
@@ -31,6 +35,33 @@ export default function AnalyzePage() {
     const isTouchPrimary = window.matchMedia?.("(pointer: coarse)").matches ?? false;
     setIsDesktop(!isMobileUA && !isTouchPrimary);
   }, []);
+
+  // Run quality check whenever a new preview lands
+  useEffect(() => {
+    if (!preview) {
+      setQuality(null);
+      setIgnoreWarning(false);
+      return;
+    }
+    let cancelled = false;
+    setChecking(true);
+    analyzeImageQuality(preview)
+      .then((report) => {
+        if (cancelled) return;
+        setQuality(report);
+        setIgnoreWarning(false);
+      })
+      .catch(() => {
+        // Quality check failure shouldn't block analysis — just skip warnings
+        if (!cancelled) setQuality(null);
+      })
+      .finally(() => {
+        if (!cancelled) setChecking(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [preview]);
 
   const STEPS = [
     "Reading skin undertone…",
@@ -331,14 +362,76 @@ export default function AnalyzePage() {
           </ul>
         </div>
 
+        {/* Quality feedback (hard-block or soft-warn) */}
+        {preview && quality && quality.severity !== "ok" && (
+          <div
+            className={cn(
+              "mt-6 flex items-start gap-3 p-4 rounded-xl border text-sm",
+              quality.severity === "block"
+                ? "bg-red-50 border-red-200 text-red-700"
+                : "bg-amber-50 border-amber-200 text-amber-800"
+            )}
+          >
+            {quality.severity === "block" ? (
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            ) : (
+              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            )}
+            <div className="flex-1">
+              <p className="font-semibold">
+                {quality.severity === "block"
+                  ? "Photo can't be analysed"
+                  : "Photo quality could be better"}
+              </p>
+              <ul className="mt-1 space-y-1">
+                {quality.issues.map((issue, i) => (
+                  <li key={i} className={quality.severity === "block" ? "text-red-700" : "text-amber-700"}>
+                    {issue.message}
+                  </li>
+                ))}
+              </ul>
+              <button
+                onClick={() => setPreview(null)}
+                className="mt-3 underline text-xs font-medium"
+              >
+                Try a different photo
+              </button>
+              {quality.severity === "warn" && !ignoreWarning && (
+                <button
+                  onClick={() => setIgnoreWarning(true)}
+                  className="mt-3 ml-4 underline text-xs"
+                >
+                  Use anyway
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {preview && quality && quality.severity === "ok" && !checking && (
+          <div className="mt-6 flex items-center gap-2 p-3 rounded-xl bg-[var(--c-success)]/10 border border-[var(--c-success)]/30 text-[var(--c-success)] text-xs font-medium">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            Photo looks good for analysis
+          </div>
+        )}
+
         {/* Analyse button */}
         {preview && (
           <Button
             onClick={analyse}
             size="lg"
-            className="w-full mt-6"
+            className="w-full mt-4"
+            disabled={
+              checking ||
+              quality?.severity === "block" ||
+              (quality?.severity === "warn" && !ignoreWarning)
+            }
           >
-            Analyse my colours →
+            {checking
+              ? "Checking photo…"
+              : quality?.severity === "block"
+                ? "Photo unusable, try another"
+                : "Analyse my colours →"}
           </Button>
         )}
 
