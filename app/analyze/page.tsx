@@ -164,7 +164,7 @@ export default function AnalyzePage() {
             Upload your selfie
           </h1>
           <p className="text-sm text-[var(--c-ink-soft)]">
-            For the best result: natural light, no sunglasses, no heavy filters.
+            For the best result: natural light, no glasses, no heavy makeup.
           </p>
         </div>
 
