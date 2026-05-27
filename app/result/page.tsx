@@ -173,7 +173,7 @@ export default function ResultPage() {
             <div className="space-y-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-success)] mb-2">Wear</p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-4">
                   {details.metals.best.map((m) => (
                     <MaterialChip key={m} label={m} category="metal" />
                   ))}
@@ -181,7 +181,7 @@ export default function ResultPage() {
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-red-700 mb-2">Avoid</p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-4">
                   {details.metals.avoid.map((m) => (
                     <MaterialChip key={m} label={m} category="metal" muted />
                   ))}
@@ -198,7 +198,7 @@ export default function ResultPage() {
             <div className="space-y-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-soft)] mb-2">Lipstick</p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-4">
                   {details.makeup.lips.map((m) => (
                     <MaterialChip key={m} label={m} category="lipstick" />
                   ))}
@@ -206,7 +206,7 @@ export default function ResultPage() {
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-soft)] mb-2">Blush</p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-4">
                   {details.makeup.blush.map((m) => (
                     <MaterialChip key={m} label={m} category="blush" />
                   ))}
@@ -214,7 +214,7 @@ export default function ResultPage() {
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-soft)] mb-2">Eyeliner</p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-4">
                   {details.makeup.eyeliner.map((m) => (
                     <MaterialChip key={m} label={m} category="eyeliner" />
                   ))}
@@ -231,7 +231,7 @@ export default function ResultPage() {
             <div className="space-y-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-success)] mb-2">Flattering</p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-4">
                   {details.hair.best.map((m) => (
                     <MaterialChip key={m} label={m} category="hair" />
                   ))}
@@ -239,7 +239,7 @@ export default function ResultPage() {
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-red-700 mb-2">Less flattering</p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-4">
                   {details.hair.avoid.map((m) => (
                     <MaterialChip key={m} label={m} category="hair" muted />
                   ))}
