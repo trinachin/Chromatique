@@ -178,7 +178,6 @@ const EYELINER: Record<string, string> = {
   "Bronze-black":     "#3A2818",
   "Black":            "#0A0A0A",
   "Charcoal":         "#2A2C30",
-  "Cool brown":       "#4A382E",
   "Cool grey":        "#6A6E72",
   "Soft grey":        "#888A8E",
   "Smoky grey":       "#5A5C60",
