@@ -12,6 +12,7 @@ type Stage = "upload" | "analysing" | "error";
 export default function AnalyzePage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [stage, setStage] = useState<Stage>("upload");
   const [preview, setPreview] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -26,21 +27,55 @@ export default function AnalyzePage() {
     "Building your palette…",
   ];
 
-  const handleFile = useCallback((file: File) => {
+  // Resize image client-side to keep under Claude vision's ~5MB limit
+  // Max 1024px on longest edge, JPEG q=0.85 → typically 100-400 KB
+  const resizeImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX_EDGE = 1024;
+          let { width, height } = img;
+          if (width > height && width > MAX_EDGE) {
+            height = Math.round((height * MAX_EDGE) / width);
+            width = MAX_EDGE;
+          } else if (height > MAX_EDGE) {
+            width = Math.round((width * MAX_EDGE) / height);
+            height = MAX_EDGE;
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return reject(new Error("Canvas not supported"));
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", 0.85));
+        };
+        img.onerror = () => reject(new Error("Could not read image"));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error("Could not read file"));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFile = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) {
-      setErrorMsg("Please upload an image file (JPG, PNG, WebP).");
+      setErrorMsg("Please upload an image file (JPG, PNG, WebP, HEIC).");
       return;
     }
-    if (file.size > 15 * 1024 * 1024) {
-      setErrorMsg("Photo too large — please use a file under 15 MB.");
+    if (file.size > 25 * 1024 * 1024) {
+      setErrorMsg("Photo too large — please use a file under 25 MB.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreview(e.target?.result as string);
+    try {
+      const resized = await resizeImage(file);
+      setPreview(resized);
       setErrorMsg("");
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Could not read the photo. Please try a different file.");
+    }
   }, []);
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -169,8 +204,19 @@ export default function AnalyzePage() {
           )}
         </div>
 
+        {/* Default file input — no capture attribute, so iOS shows action sheet
+            (Take Photo / Choose from Library / Browse Files) */}
         <input
           ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={onInputChange}
+          className="sr-only"
+        />
+
+        {/* Separate camera-only input for the "Take a photo" button */}
+        <input
+          ref={cameraInputRef}
           type="file"
           accept="image/*"
           capture="user"
@@ -181,7 +227,7 @@ export default function AnalyzePage() {
         {/* Camera button on mobile */}
         {!preview && (
           <button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => cameraInputRef.current?.click()}
             className="mt-3 w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-[var(--c-line)] text-sm text-[var(--c-ink-soft)] hover:bg-[var(--c-sand)] transition-colors"
           >
             <Camera className="w-4 h-4" />
@@ -216,7 +262,6 @@ export default function AnalyzePage() {
               "Face the light source (window or open sky)",
               "Remove sunglasses, heavy makeup, or filters",
               "Make sure your face fills most of the frame",
-              "Works beautifully on all skin tones",
             ].map((tip) => (
               <li key={tip} className="flex items-start gap-2">
                 <span className="text-[var(--c-accent)] mt-0.5">·</span>
