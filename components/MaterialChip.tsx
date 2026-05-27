@@ -13,40 +13,35 @@ type Category = "metal" | "lipstick" | "blush" | "eyeliner" | "hair";
 interface MaterialChipProps {
   label: string;
   category: Category;
-  /** Apply muted/avoid styling: 60% opacity + diagonal stripe overlay. */
+  /** Apply muted/avoid styling: diagonal stripe overlay + muted label only. Swatch colour stays accurate. */
   muted?: boolean;
 }
 
 /**
- * Square swatch + label below, matching the visual rhythm of ColourSwatch
- * in the palette section. Metals use a metallic gradient; everything else
- * uses a solid hex with a soft diagonal sheen to add depth.
+ * Square swatch (matches /result palette size) + label below. Fixed width so
+ * varying label lengths don't change the column rhythm.
  */
 export function MaterialChip({ label, category, muted = false }: MaterialChipProps) {
   const background = getBackground(category, label);
 
   return (
-    <div
-      className={cn(
-        "flex flex-col items-center gap-1.5",
-        muted && "opacity-60"
-      )}
-    >
+    <div className="flex flex-col items-center gap-1.5 w-20 flex-shrink-0">
       <div
         aria-hidden="true"
         className="w-16 h-16 rounded-xl border border-black/10 shadow-sm relative overflow-hidden"
         style={{ background }}
       >
-        {/* Specular highlight to add subtle depth */}
-        <span
-          className="absolute top-1.5 left-1.5 w-4 h-2 rounded-full bg-white/40 blur-[1px] pointer-events-none"
-        />
         {/* Avoid stripe overlay (matches /result "Colours to avoid" pattern) */}
         {muted && (
-          <span className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(0,0,0,0.12)_4px,rgba(0,0,0,0.12)_5px)] pointer-events-none" />
+          <span className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(0,0,0,0.18)_4px,rgba(0,0,0,0.18)_5px)] pointer-events-none" />
         )}
       </div>
-      <span className="text-xs font-medium text-[var(--c-ink)] text-center max-w-[80px] leading-tight">
+      <span
+        className={cn(
+          "text-xs font-medium text-center leading-tight",
+          muted ? "text-[var(--c-ink-soft)]" : "text-[var(--c-ink)]"
+        )}
+      >
         {label}
       </span>
     </div>
@@ -56,16 +51,13 @@ export function MaterialChip({ label, category, muted = false }: MaterialChipPro
 function getBackground(category: Category, label: string): string {
   switch (category) {
     case "metal":
-      // Multi-stop metallic gradient already includes shine
       return getMetalGradient(label);
     case "lipstick": {
       const hex = getLipstickHex(label);
-      // Subtle vertical gradient suggests glossy bullet sheen
       return `linear-gradient(160deg, ${tint(hex, 18)} 0%, ${hex} 45%, ${shade(hex, -12)} 100%)`;
     }
     case "blush": {
       const hex = getBlushHex(label);
-      // Soft radial blush gradient
       return `radial-gradient(circle at 30% 30%, ${tint(hex, 25)} 0%, ${hex} 50%, ${shade(hex, -12)} 100%)`;
     }
     case "eyeliner": {
@@ -74,7 +66,6 @@ function getBackground(category: Category, label: string): string {
     }
     case "hair": {
       const hex = getHairHex(label);
-      // Vertical gradient suggests hair strand light-to-shadow
       return `linear-gradient(180deg, ${tint(hex, 18)} 0%, ${hex} 50%, ${shade(hex, -15)} 100%)`;
     }
   }
