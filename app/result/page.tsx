@@ -15,6 +15,7 @@ import { getSeasonProfile, getSeasonDetails, getTaggedPalette, SEASON_FAMILY_ACC
 import { generateShareCard } from "@/lib/share-card";
 import { encodeResult } from "@/lib/result-codec";
 import { cn } from "@/lib/utils";
+import { PUBLIC_URL } from "@/lib/site-config";
 
 export default function ResultPage() {
   const router = useRouter();
@@ -372,7 +373,7 @@ export default function ResultPage() {
         open={shareOpen}
         onClose={() => setShareOpen(false)}
         result={result}
-        url={typeof window !== "undefined" ? window.location.href : "https://chromatique-trina1.vercel.app/"}
+        url={typeof window !== "undefined" ? window.location.href : `${PUBLIC_URL}/`}
       />
     </div>
   );

@@ -1,5 +1,6 @@
 import type { ColourResult } from "./types";
 import { getSeasonProfile, SEASON_FAMILY_ACCENT } from "./seasons";
+import { PUBLIC_HOST } from "./site-config";
 
 // Renders the result to a 1080x1350 portrait card (Instagram-friendly).
 // Returns a Promise<Blob> (PNG) suitable for download or navigator.share.
@@ -128,7 +129,7 @@ export async function generateShareCard(result: ColourResult): Promise<Blob> {
   ctx.fillStyle = INK_SOFT;
   ctx.font = "500 28px 'Hanken Grotesk', system-ui, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("chromatique-trina1.vercel.app", W / 2, H - 130);
+  ctx.fillText(PUBLIC_HOST, W / 2, H - 130);
 
   // ── Tiny privacy line ─────────────────────────────────────
   ctx.fillStyle = INK_SOFT + "AA";

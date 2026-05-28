@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { PUBLIC_HOST } from "@/lib/site-config";
 
 // Static Open Graph image rendered at build time. Next.js auto-injects:
 //   <meta property="og:image" content="/opengraph-image" />
@@ -145,7 +146,7 @@ export default async function Image() {
               alignItems: "center",
             }}
           >
-            chromatique-trina1.vercel.app
+            {PUBLIC_HOST}
           </div>
         </div>
       </div>

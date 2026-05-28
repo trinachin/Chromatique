@@ -4,6 +4,7 @@
 import type { ColourResult } from "./types";
 import type { FabricContext, FabricRecommendation } from "./fabric-rules";
 import { SEASON_FAMILY_ACCENT } from "./seasons";
+import { PUBLIC_HOST } from "./site-config";
 
 export async function generateFabricCard(
   result: ColourResult | null,
@@ -158,7 +159,7 @@ export async function generateFabricCard(
   ctx2d.fillStyle = INK_SOFT;
   ctx2d.font = "500 24px 'Hanken Grotesk', system-ui, sans-serif";
   ctx2d.textAlign = "center";
-  ctx2d.fillText("chromatique-trina1.vercel.app", W / 2, footerY + 50);
+  ctx2d.fillText(PUBLIC_HOST, W / 2, footerY + 50);
 
   ctx2d.fillStyle = INK_SOFT + "AA";
   ctx2d.font = "400 18px 'Hanken Grotesk', system-ui, sans-serif";

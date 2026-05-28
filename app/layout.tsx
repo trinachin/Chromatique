@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
+import { PUBLIC_URL } from "@/lib/site-config";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -17,7 +18,7 @@ const hanken = Hanken_Grotesk({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://chromatique-trina1.vercel.app"),
+  metadataBase: new URL(PUBLIC_URL),
   title: "Chromatique · Discover Your Colour Season",
   description:
     "AI-powered personal colour analysis. Upload a selfie and discover your unique colour season, palette, and styling guidance in seconds.",

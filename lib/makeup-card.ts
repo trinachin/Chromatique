@@ -4,6 +4,7 @@
 // Saved as PNG via `downloadAs("makeup-card.png")` from the result page.
 
 import type { ColourResult, FacialFeatures } from "./types";
+import { PUBLIC_HOST } from "./site-config";
 import { getSeasonProfile, getSeasonDetails, SEASON_FAMILY_ACCENT } from "./seasons";
 import {
   EYELINER_TECHNIQUE,
@@ -194,7 +195,7 @@ export async function generateMakeupCard(
   ctx.fillStyle = INK_SOFT;
   ctx.font = "500 24px 'Hanken Grotesk', system-ui, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("chromatique-trina1.vercel.app", W / 2, footerY + 50);
+  ctx.fillText(PUBLIC_HOST, W / 2, footerY + 50);
 
   if (details) {
     ctx.fillStyle = INK_SOFT + "AA";
