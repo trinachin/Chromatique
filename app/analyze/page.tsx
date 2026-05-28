@@ -6,6 +6,7 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { CameraModal } from "@/components/CameraModal";
 import { AdjustablePreview, type AdjustablePreviewHandle } from "@/components/AdjustablePreview";
+import { AdjustPhotoModal } from "@/components/AdjustPhotoModal";
 import { Upload, Camera, X, AlertCircle, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { analyzeImageQuality, type QualityReport } from "@/lib/image-quality";
@@ -43,6 +44,8 @@ export default function AnalyzePage() {
   const extraFileInputRef = useRef<HTMLInputElement>(null);
   const extraCameraInputRef = useRef<HTMLInputElement>(null);
   const [showExtraCamera, setShowExtraCamera] = useState(false);
+  // Adjust-photo modal state for editing extras (pan/zoom/tilt)
+  const [adjustModalIndex, setAdjustModalIndex] = useState<number | null>(null);
 
   // Desktop "Take a photo" opens the webcam modal; mobile uses the native
   // input[capture] which triggers the system camera app instead.
@@ -369,18 +372,27 @@ export default function AnalyzePage() {
             </p>
           </div>
 
-          {/* 3 slots */}
-          <div className="grid grid-cols-3 gap-3 mb-8">
+          {/* 3 slots — tap a filled photo (2 or 3) to adjust pan/zoom/tilt */}
+          <div className="grid grid-cols-3 gap-3 mb-2">
             {slots.map((src, idx) => (
               <div
                 key={idx}
                 className={cn(
                   "relative aspect-square rounded-2xl overflow-hidden border-2 border-dashed",
-                  src ? "border-transparent" : "border-[var(--c-line)] bg-[var(--c-sand)]/40 cursor-pointer hover:border-[var(--c-accent)]"
+                  src
+                    ? idx === 0
+                      ? "border-transparent"
+                      : "border-transparent cursor-pointer"
+                    : "border-[var(--c-line)] bg-[var(--c-sand)]/40 cursor-pointer hover:border-[var(--c-accent)]"
                 )}
                 onClick={() => {
-                  if (src || idx === 0) return;
-                  // Slot 2 or 3, open file picker for extras
+                  if (idx === 0) return; // photo 1 is edited inline on the upload step
+                  if (src) {
+                    // Open adjust modal for filled slots 2 or 3
+                    setAdjustModalIndex(idx - 1);
+                    return;
+                  }
+                  // Empty slot, open file picker (mobile) or webcam (desktop)
                   if (isDesktop) {
                     setShowExtraCamera(true);
                   } else {
@@ -393,16 +405,24 @@ export default function AnalyzePage() {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={src} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
                     {idx > 0 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setExtraPhotos((prev) => prev.filter((_, i) => i !== idx - 1));
-                        }}
-                        className="absolute top-1.5 right-1.5 bg-[var(--c-ink)]/70 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-[var(--c-ink)]"
-                        aria-label="Remove this photo"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
+                      <>
+                        {/* "Edit" hint overlay on tap-to-adjust slots */}
+                        <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-white bg-[var(--c-ink)]/70 px-2 py-1 rounded-full">
+                            Adjust
+                          </span>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExtraPhotos((prev) => prev.filter((_, i) => i !== idx - 1));
+                          }}
+                          className="absolute top-1.5 right-1.5 bg-[var(--c-ink)]/70 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-[var(--c-ink)]"
+                          aria-label="Remove this photo"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </>
                     )}
                   </>
                 ) : (
@@ -414,6 +434,9 @@ export default function AnalyzePage() {
               </div>
             ))}
           </div>
+          <p className="text-[11px] text-[var(--c-ink-soft)]/70 mb-6 text-center">
+            Tap photos 2 or 3 to adjust pan, zoom, and tilt.
+          </p>
 
           {/* Hidden inputs for extra photos */}
           <input
@@ -467,6 +490,22 @@ export default function AnalyzePage() {
             onClose={() => setShowExtraCamera(false)}
             onCapture={(dataUrl) => {
               setExtraPhotos((prev) => (prev.length < 2 ? [...prev, dataUrl] : prev));
+            }}
+          />
+
+          {/* Adjust pan/zoom/tilt modal for filled photos 2 + 3 */}
+          <AdjustPhotoModal
+            open={adjustModalIndex !== null}
+            src={adjustModalIndex !== null ? extraPhotos[adjustModalIndex] ?? null : null}
+            onClose={() => setAdjustModalIndex(null)}
+            onSave={(adjusted) => {
+              if (adjustModalIndex === null) return;
+              setExtraPhotos((prev) => {
+                const next = [...prev];
+                next[adjustModalIndex] = adjusted;
+                return next;
+              });
+              setAdjustModalIndex(null);
             }}
           />
         </main>
