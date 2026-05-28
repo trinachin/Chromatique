@@ -65,29 +65,30 @@ export default function FabricGuidePage() {
           />
         </section>
 
-        {/* Table of contents — anchor links */}
+        {/* Table of contents — anchor links. Order matches render order:
+            label checker first (instant value, no setup), then personalised guide. */}
         <nav className="bg-[var(--c-surface)]/60 rounded-2xl border border-[var(--c-line)] p-3 sm:p-4">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--c-ink-soft)] mb-2">
             On this page
           </p>
           <div className="flex flex-wrap gap-1.5 text-xs">
-            <TocLink href="#about-you" label="01 · About you" />
-            <TocLink href="#your-fabrics" label="02 · Your fabrics" />
-            <TocLink href="#check-label" label="03 · Check a label" />
+            <TocLink href="#check-label" label="01 · Check a label" />
+            <TocLink href="#about-you" label="02 · About you" />
+            <TocLink href="#your-fabrics" label="03 · Your fabrics" />
             <TocLink href="#learn" label="04 · Learn the rules" />
           </div>
         </nav>
 
-        {/* The guide itself (sections 01, 02, 04) */}
-        <FabricGuideSection result={result ?? undefined} />
-
-        {/* Composition Checker (section 03) */}
+        {/* Section 01 — Composition Checker.
+            Placed first because it delivers value with zero setup: paste any
+            label, get a verdict. The personalised guide below requires the
+            user to tell us about themselves first. */}
         <section
           id="check-label"
           className="bg-[var(--c-surface)] rounded-2xl p-5 sm:p-6 border border-[var(--c-line)] space-y-4 scroll-mt-20"
         >
           <div className="flex items-center gap-3">
-            <span className="font-display text-2xl font-bold text-[var(--c-line)] leading-none">03</span>
+            <span className="font-display text-2xl font-bold text-[var(--c-line)] leading-none">01</span>
             <div className="flex items-center gap-2">
               <span className="text-[var(--c-accent)]"><ScanSearch className="w-4 h-4" /></span>
               <h2 className="font-display text-lg sm:text-xl font-semibold text-[var(--c-ink)]">
@@ -100,6 +101,11 @@ export default function FabricGuidePage() {
           </p>
           <CompositionChecker />
         </section>
+
+        {/* Sections 02, 03, 04 — the personalised guide
+            (About you, Your fabrics, Learn the rules) all live inside this
+            component which numbers them internally. */}
+        <FabricGuideSection result={result ?? undefined} />
 
         {/* If they haven't done analysis yet, prompt them */}
         {!result && (

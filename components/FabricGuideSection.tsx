@@ -110,7 +110,7 @@ export function FabricGuideSection({ result }: Props) {
         id="about-you"
         className="bg-[var(--c-surface)] rounded-2xl p-5 sm:p-6 border border-[var(--c-line)] space-y-4 scroll-mt-20"
       >
-        <StepHeader number="01" icon={<HeartPulse className="w-4 h-4" />} title="Tell us about you" />
+        <StepHeader number="02" icon={<HeartPulse className="w-4 h-4" />} title="Tell us about you" />
         <div className="space-y-3">
           <PickerRow
             label="Climate"
@@ -154,7 +154,7 @@ export function FabricGuideSection({ result }: Props) {
         id="your-fabrics"
         className="bg-[var(--c-surface)] rounded-2xl p-5 sm:p-6 border border-[var(--c-line)] space-y-5 scroll-mt-20"
       >
-        <StepHeader number="02" icon={<Leaf className="w-4 h-4" />} title="What works for you" />
+        <StepHeader number="03" icon={<Leaf className="w-4 h-4" />} title="What works for you" />
 
         {/* Personal reason chips */}
         {recommendation.personalReasons.length > 0 && (
@@ -262,12 +262,31 @@ export function FabricGuideSection({ result }: Props) {
         </div>
       </section>
 
-      {/* ─── STEP 3: Learn — encyclopedia + tips ───────────────────────── */}
+      {/* ─── Save card — placed BEFORE the Learn section so the user can
+              capture their personalised picks immediately, without scrolling
+              past the deep-dive reference. ─────────────────────────────── */}
+      <section className="bg-[var(--c-surface)] rounded-2xl p-5 sm:p-6 border border-[var(--c-line)]">
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          variant="primary"
+          size="md"
+          className="w-full gap-2"
+        >
+          <Download className="w-4 h-4" />
+          {saving ? "Creating your card…" : saved ? "Saved!" : "Save my fabric card"}
+        </Button>
+        <p className="text-[11px] text-[var(--c-ink-soft)]/70 text-center mt-2">
+          A shareable infographic with your anchors, skips, and care notes.
+        </p>
+      </section>
+
+      {/* ─── STEP 4: Learn — encyclopedia + tips ───────────────────────── */}
       <section
         id="learn"
         className="bg-[var(--c-surface)] rounded-2xl p-5 sm:p-6 border border-[var(--c-line)] space-y-5 scroll-mt-20"
       >
-        <StepHeader number="03" icon={<Sparkles className="w-4 h-4" />} title="Learn the rules" />
+        <StepHeader number="04" icon={<Sparkles className="w-4 h-4" />} title="Learn the rules" />
 
         {/* Shopping notes */}
         <div>
@@ -329,22 +348,6 @@ export function FabricGuideSection({ result }: Props) {
         </div>
       </section>
 
-      {/* ─── Save card ──────────────────────────────────────────────── */}
-      <section className="bg-[var(--c-surface)] rounded-2xl p-5 sm:p-6 border border-[var(--c-line)]">
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          variant="primary"
-          size="md"
-          className="w-full gap-2"
-        >
-          <Download className="w-4 h-4" />
-          {saving ? "Creating your card…" : saved ? "Saved!" : "Save my fabric card"}
-        </Button>
-        <p className="text-[11px] text-[var(--c-ink-soft)]/70 text-center mt-2">
-          A shareable infographic with your anchors, skips, and care notes.
-        </p>
-      </section>
     </div>
   );
 }
@@ -417,8 +420,14 @@ function FabricChip({ fabric, muted = false }: { fabric: Fabric; muted?: boolean
     <div className="flex flex-col items-center gap-1.5 w-20 flex-shrink-0">
       <div
         aria-hidden="true"
-        className="w-16 h-16 rounded-xl border border-black/10 shadow-sm relative overflow-hidden"
-        style={{ background }}
+        className="w-16 h-16 rounded-xl border border-black/20 relative overflow-hidden"
+        style={{
+          background,
+          // Inner rim highlight + soft drop shadow give the swatch real depth
+          // against the warm-cream page bg without overpowering the texture.
+          boxShadow:
+            "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.08)",
+        }}
       >
         {muted && (
           <span className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(0,0,0,0.18)_4px,rgba(0,0,0,0.18)_5px)] pointer-events-none" />
@@ -447,8 +456,11 @@ function OccasionRow({ title, description, fabricSlugs }: { title: string; descr
         {fabrics.map((f) => (
           <div key={f.slug} className="flex items-center gap-2">
             <div
-              className="w-7 h-7 rounded-md border border-black/10 flex-shrink-0"
-              style={{ background: getFabricBackground(f.slug, f.category) }}
+              className="w-7 h-7 rounded-md border border-black/20 flex-shrink-0"
+              style={{
+                background: getFabricBackground(f.slug, f.category),
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35), 0 1px 2px rgba(0,0,0,0.06)",
+              }}
               aria-hidden="true"
             />
             <span className="text-xs text-[var(--c-ink)]">{f.name}</span>
@@ -477,8 +489,11 @@ function EncyclopediaCard({ fabric, skin, climate, bodyThermal }: {
   return (
     <div className="flex gap-3 bg-[var(--c-bg)] rounded-xl p-3">
       <div
-        className="w-12 h-12 rounded-md border border-black/10 flex-shrink-0"
-        style={{ background: getFabricBackground(fabric.slug, fabric.category) }}
+        className="w-12 h-12 rounded-md border border-black/20 flex-shrink-0"
+        style={{
+          background: getFabricBackground(fabric.slug, fabric.category),
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4), 0 1px 3px rgba(0,0,0,0.08)",
+        }}
         aria-hidden="true"
       />
       <div className="flex-1 min-w-0">
@@ -531,8 +546,11 @@ function ShopRow({ fabric, lifestyle }: { fabric: Fabric; lifestyle: Lifestyle }
     <div className="bg-[var(--c-bg)] rounded-xl p-3">
       <div className="flex items-center gap-2 mb-2">
         <div
-          className="w-6 h-6 rounded-md border border-black/10 flex-shrink-0"
-          style={{ background: getFabricBackground(fabric.slug, fabric.category) }}
+          className="w-6 h-6 rounded-md border border-black/20 flex-shrink-0"
+          style={{
+            background: getFabricBackground(fabric.slug, fabric.category),
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35), 0 1px 2px rgba(0,0,0,0.06)",
+          }}
           aria-hidden="true"
         />
         <p className="text-sm font-semibold text-[var(--c-ink)]">{fabric.name}</p>
