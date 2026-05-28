@@ -9,6 +9,7 @@ export function Navbar() {
         </Link>
         <nav className="hidden sm:flex gap-6 text-sm text-[var(--c-ink-soft)]">
           <Link href="/#how-it-works" className="hover:text-[var(--c-ink)] transition-colors">How it works</Link>
+          <Link href="/fabric-guide" className="hover:text-[var(--c-ink)] transition-colors">Fabric guide</Link>
           <Link href="/analyze" className="hover:text-[var(--c-ink)] transition-colors">Start free</Link>
         </nav>
       </div>

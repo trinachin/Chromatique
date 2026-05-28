@@ -41,6 +41,7 @@ export default function AnalyzePage() {
   // Multi-photo aggregation state
   const [firstResult, setFirstResult] = useState<ColourResult | null>(null);
   const [extraPhotos, setExtraPhotos] = useState<string[]>([]); // dataURLs of photos 2 and 3
+  const [extraQualities, setExtraQualities] = useState<(QualityReport | null)[]>([]); // parallel to extraPhotos; null = checking
   const extraFileInputRef = useRef<HTMLInputElement>(null);
   const extraCameraInputRef = useRef<HTMLInputElement>(null);
   const [showExtraCamera, setShowExtraCamera] = useState(false);
@@ -81,6 +82,37 @@ export default function AnalyzePage() {
       cancelled = true;
     };
   }, [preview]);
+
+  // Run quality check on each extra photo (2 + 3) as they're added or edited
+  useEffect(() => {
+    // Reset to "checking" (null) for any slot count change
+    setExtraQualities((prev) => {
+      const next: (QualityReport | null)[] = [];
+      for (let i = 0; i < extraPhotos.length; i++) next[i] = prev[i] ?? null;
+      return next;
+    });
+
+    let cancelled = false;
+    extraPhotos.forEach((dataUrl, idx) => {
+      // Mark this slot as checking before kicking off the async analysis
+      setExtraQualities((prev) => {
+        const next = [...prev];
+        next[idx] = null;
+        return next;
+      });
+      analyzeImageQuality(dataUrl)
+        .then((report) => {
+          if (cancelled) return;
+          setExtraQualities((prev) => {
+            const next = [...prev];
+            next[idx] = report;
+            return next;
+          });
+        })
+        .catch(() => { /* skip silently */ });
+    });
+    return () => { cancelled = true; };
+  }, [extraPhotos]);
 
   const STEPS = [
     "Reading skin undertone…",
@@ -193,9 +225,11 @@ export default function AnalyzePage() {
       if (result.confidence >= HIGH_CONFIDENCE_THRESHOLD) {
         // Confident enough, ship directly
         sessionStorage.setItem("chromatique_result", JSON.stringify(result));
-        // Stash the analysed photo so /result can show a small thumbnail + Save.
+        // Stash the analysed photo(s) so /result can show thumbnails + Save.
         // Privacy: this lives only in the user's sessionStorage; never sent to
         // a server, never included in the shared /r/ URL.
+        sessionStorage.setItem("chromatique_photos", JSON.stringify([imageDataUrl]));
+        // Back-compat for older sessions that read the singular key
         sessionStorage.setItem("chromatique_photo", imageDataUrl);
         router.push("/result");
       } else {
@@ -248,9 +282,14 @@ export default function AnalyzePage() {
         },
       };
       sessionStorage.setItem("chromatique_result", JSON.stringify(enriched));
-      // Stash the FIRST photo only (the user's primary capture) for the /result thumbnail.
+      // Stash all photos used in the multi-photo analysis (primary + extras).
       // Privacy: never sent to a server, never in the shared /r/ URL.
-      if (preview) sessionStorage.setItem("chromatique_photo", preview);
+      if (preview) {
+        const allPhotos = [preview, ...extraPhotos];
+        sessionStorage.setItem("chromatique_photos", JSON.stringify(allPhotos));
+        // Back-compat singular key, points at the primary photo
+        sessionStorage.setItem("chromatique_photo", preview);
+      }
       router.push("/result");
     } catch (err) {
       clearInterval(stepInterval);
@@ -281,7 +320,10 @@ export default function AnalyzePage() {
   const useFirstAnyway = () => {
     if (!firstResult) return;
     sessionStorage.setItem("chromatique_result", JSON.stringify(firstResult));
-    if (preview) sessionStorage.setItem("chromatique_photo", preview);
+    if (preview) {
+      sessionStorage.setItem("chromatique_photos", JSON.stringify([preview]));
+      sessionStorage.setItem("chromatique_photo", preview);
+    }
     router.push("/result");
   };
 
@@ -362,8 +404,15 @@ export default function AnalyzePage() {
   // Collecting extra photos (slots 2 + 3)
   if (stage === "collecting_extra" && firstResult && preview) {
     const slots = [preview, extraPhotos[0] ?? null, extraPhotos[1] ?? null];
-    const ready = extraPhotos.length >= 1;
+    // Block submission if any uploaded extra has a blocking quality issue
+    const anyBlocked = extraQualities.some((q) => q?.severity === "block");
+    const stillChecking = extraPhotos.length > 0 && extraQualities.some((q, i) => i < extraPhotos.length && q === null);
+    const ready = extraPhotos.length >= 1 && !anyBlocked && !stillChecking;
     const totalPhotos = 1 + extraPhotos.length;
+    // Collect issues to surface beneath the grid
+    const extraIssues = extraPhotos
+      .map((_, i) => ({ idx: i, q: extraQualities[i] }))
+      .filter(({ q }) => q && q.severity !== "ok") as { idx: number; q: QualityReport }[];
     return (
       <div className="min-h-screen flex flex-col bg-[var(--c-bg)]">
         <Navbar />
@@ -387,69 +436,139 @@ export default function AnalyzePage() {
 
           {/* 3 slots — tap a filled photo (2 or 3) to adjust pan/zoom/tilt */}
           <div className="grid grid-cols-3 gap-3 mb-2">
-            {slots.map((src, idx) => (
-              <div
-                key={idx}
-                className={cn(
-                  "relative aspect-square rounded-2xl overflow-hidden border-2 border-dashed",
-                  src
-                    ? idx === 0
-                      ? "border-transparent"
-                      : "border-transparent cursor-pointer"
-                    : "border-[var(--c-line)] bg-[var(--c-sand)]/40 cursor-pointer hover:border-[var(--c-accent)]"
-                )}
-                onClick={() => {
-                  if (idx === 0) return; // photo 1 is edited inline on the upload step
-                  if (src) {
-                    // Open adjust modal for filled slots 2 or 3
-                    setAdjustModalIndex(idx - 1);
-                    return;
-                  }
-                  // Empty slot, open file picker (mobile) or webcam (desktop)
-                  if (isDesktop) {
-                    setShowExtraCamera(true);
-                  } else {
-                    extraFileInputRef.current?.click();
-                  }
-                }}
-              >
-                {src ? (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
-                    {idx > 0 && (
-                      <>
-                        {/* "Edit" hint overlay on tap-to-adjust slots */}
-                        <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-white bg-[var(--c-ink)]/70 px-2 py-1 rounded-full">
-                            Adjust
-                          </span>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setExtraPhotos((prev) => prev.filter((_, i) => i !== idx - 1));
-                          }}
-                          className="absolute top-1.5 right-1.5 bg-[var(--c-ink)]/70 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-[var(--c-ink)]"
-                          aria-label="Remove this photo"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--c-ink-soft)]">
-                    <Upload className="w-5 h-5 mb-1" />
-                    <span className="text-[10px] font-medium">Photo {idx + 1}</span>
-                  </div>
-                )}
-              </div>
-            ))}
+            {slots.map((src, idx) => {
+              // Quality status for filled extra slots (idx 1 and 2 → extraPhotos 0 and 1)
+              const extraIdx = idx - 1;
+              const q = idx > 0 ? extraQualities[extraIdx] : null;
+              const sev = q?.severity;
+              const checkingThis = idx > 0 && extraPhotos[extraIdx] && q === null;
+              return (
+                <div
+                  key={idx}
+                  className={cn(
+                    "relative aspect-square rounded-2xl overflow-hidden border-2 border-dashed",
+                    src
+                      ? idx === 0
+                        ? "border-transparent"
+                        : sev === "block"
+                          ? "border-red-300"
+                          : sev === "warn"
+                            ? "border-amber-300"
+                            : "border-transparent cursor-pointer"
+                      : "border-[var(--c-line)] bg-[var(--c-sand)]/40 cursor-pointer hover:border-[var(--c-accent)]"
+                  )}
+                  onClick={() => {
+                    if (idx === 0) return; // photo 1 is edited inline on the upload step
+                    if (src) {
+                      // Open adjust modal for filled slots 2 or 3
+                      setAdjustModalIndex(idx - 1);
+                      return;
+                    }
+                    // Empty slot, open file picker (mobile) or webcam (desktop)
+                    if (isDesktop) {
+                      setShowExtraCamera(true);
+                    } else {
+                      extraFileInputRef.current?.click();
+                    }
+                  }}
+                >
+                  {src ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={src} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                      {idx > 0 && (
+                        <>
+                          {/* "Edit" hint overlay on tap-to-adjust slots */}
+                          <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-white bg-[var(--c-ink)]/70 px-2 py-1 rounded-full">
+                              Adjust
+                            </span>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExtraPhotos((prev) => prev.filter((_, i) => i !== idx - 1));
+                            }}
+                            className="absolute top-1.5 right-1.5 bg-[var(--c-ink)]/70 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-[var(--c-ink)]"
+                            aria-label="Remove this photo"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                          {/* Quality badge at the bottom-left */}
+                          {checkingThis && (
+                            <span className="absolute bottom-1.5 left-1.5 bg-[var(--c-ink)]/70 text-white rounded-full w-6 h-6 flex items-center justify-center">
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            </span>
+                          )}
+                          {!checkingThis && sev === "ok" && (
+                            <span className="absolute bottom-1.5 left-1.5 bg-[var(--c-success)] text-white rounded-full w-6 h-6 flex items-center justify-center" title="Photo looks good">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            </span>
+                          )}
+                          {!checkingThis && sev === "warn" && (
+                            <span className="absolute bottom-1.5 left-1.5 bg-amber-500 text-white rounded-full w-6 h-6 flex items-center justify-center" title="Quality could be better">
+                              <AlertTriangle className="w-3.5 h-3.5" />
+                            </span>
+                          )}
+                          {!checkingThis && sev === "block" && (
+                            <span className="absolute bottom-1.5 left-1.5 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center" title="Photo can't be analysed">
+                              <AlertCircle className="w-3.5 h-3.5" />
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--c-ink-soft)]">
+                      <Upload className="w-5 h-5 mb-1" />
+                      <span className="text-[10px] font-medium">Photo {idx + 1}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-          <p className="text-[11px] text-[var(--c-ink-soft)]/70 mb-6 text-center">
+          <p className="text-[11px] text-[var(--c-ink-soft)]/70 mb-4 text-center">
             Tap photos 2 or 3 to adjust pan, zoom, and tilt.
           </p>
+
+          {/* Per-photo quality feedback for extras */}
+          {extraIssues.length > 0 && (
+            <div className="mb-5 space-y-2">
+              {extraIssues.map(({ idx, q }) => (
+                <div
+                  key={idx}
+                  className={cn(
+                    "flex items-start gap-2 p-3 rounded-xl border text-xs",
+                    q.severity === "block"
+                      ? "bg-red-50 border-red-200 text-red-700"
+                      : "bg-amber-50 border-amber-200 text-amber-800"
+                  )}
+                >
+                  {q.severity === "block"
+                    ? <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    : <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />}
+                  <div className="flex-1">
+                    <p className="font-semibold">
+                      Photo {idx + 2}: {q.severity === "block" ? "can't be analysed" : "could be better"}
+                    </p>
+                    <ul className="mt-0.5 space-y-0.5">
+                      {q.issues.map((issue, i) => (
+                        <li key={i}>{issue.message}</li>
+                      ))}
+                    </ul>
+                    <button
+                      type="button"
+                      onClick={() => setExtraPhotos((prev) => prev.filter((_, i) => i !== idx))}
+                      className="mt-1 underline text-[11px] font-medium"
+                    >
+                      Remove and retake
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Hidden inputs for extra photos */}
           <input
@@ -487,9 +606,13 @@ export default function AnalyzePage() {
             className="w-full"
             disabled={!ready}
           >
-            {ready
-              ? `Analyse ${1 + extraPhotos.length} photo${extraPhotos.length === 0 ? "" : "s"} →`
-              : "Add at least 1 photo to continue"}
+            {extraPhotos.length === 0
+              ? "Add at least 1 photo to continue"
+              : stillChecking
+                ? "Checking photo quality…"
+                : anyBlocked
+                  ? "Fix the photo issue above to continue"
+                  : `Analyse ${1 + extraPhotos.length} photo${extraPhotos.length === 0 ? "" : "s"} →`}
           </Button>
 
           <button

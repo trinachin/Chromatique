@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Leaf, Download, ChevronDown, ChevronUp, Info } from "lucide-react";
+import { Leaf, Download, ChevronDown, ChevronUp, Info, ShoppingBag, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FABRICS, type Fabric } from "@/lib/fabrics";
@@ -15,9 +15,11 @@ import {
 } from "@/lib/fabric-rules";
 import type { ColourResult } from "@/lib/types";
 import { generateFabricCard } from "@/lib/fabric-card";
+import { buildShopLinks } from "@/lib/fabric-shop-links";
 
 interface Props {
-  result: ColourResult;
+  /** Optional: when present, the fabric card gets the season family accent + subline. */
+  result?: ColourResult;
 }
 
 const CLIMATE_OPTIONS: Climate[] = ["Tropical", "Mixed", "Temperate", "Cold"];
@@ -34,6 +36,7 @@ export function FabricGuideSection({ result }: Props) {
   const [lifestyle, setLifestyle] = useState<Lifestyle>("Mixed");
   const [skin, setSkin] = useState<SkinSensitivity>("Normal");
   const [encyclopediaOpen, setEncyclopediaOpen] = useState(false);
+  const [shopOpen, setShopOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -53,8 +56,8 @@ export function FabricGuideSection({ result }: Props) {
   useEffect(() => { localStorage.setItem(LS_SKIN, skin); }, [skin]);
 
   const ctx = useMemo(
-    () => ({ climate, lifestyle, skin, seasonFamily: result.seasonFamily }),
-    [climate, lifestyle, skin, result.seasonFamily]
+    () => ({ climate, lifestyle, skin, seasonFamily: result?.seasonFamily }),
+    [climate, lifestyle, skin, result?.seasonFamily]
   );
 
   const recommendation = useMemo(() => recommendFabrics(ctx), [ctx]);
@@ -63,7 +66,7 @@ export function FabricGuideSection({ result }: Props) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const blob = await generateFabricCard(result, ctx, recommendation);
+      const blob = await generateFabricCard(result ?? null, ctx, recommendation);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -126,6 +129,33 @@ export function FabricGuideSection({ result }: Props) {
             <FabricChip key={f.slug} fabric={f} muted />
           ))}
         </div>
+      </div>
+
+      {/* Where to shop your anchors */}
+      <div className="pt-2 border-t border-[var(--c-line)]">
+        <button
+          type="button"
+          onClick={() => setShopOpen((v) => !v)}
+          className="w-full flex items-center justify-between text-left py-2"
+        >
+          <span className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-soft)] flex items-center gap-1.5">
+            <ShoppingBag className="w-3.5 h-3.5" />
+            Where to shop your anchors
+          </span>
+          {shopOpen
+            ? <ChevronUp className="w-4 h-4 text-[var(--c-ink-soft)]" />
+            : <ChevronDown className="w-4 h-4 text-[var(--c-ink-soft)]" />}
+        </button>
+        {shopOpen && (
+          <div className="space-y-3 mt-2">
+            <p className="text-[11px] text-[var(--c-ink-soft)]/80 leading-relaxed">
+              These are live searches on each retailer for your fabric. We don&apos;t recommend specific products, so the inventory you see is fresh and unfiltered. No affiliate links.
+            </p>
+            {recommendation.anchors.slice(0, 5).map((f) => (
+              <ShopRow key={f.slug} fabric={f} lifestyle={lifestyle} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* By occasion */}
@@ -319,6 +349,36 @@ function EncyclopediaCard({ fabric }: { fabric: Fabric }) {
           {fabric.tropicalFit >= 4 && <PropPill label="Tropical-ready" tone="success" />}
           {fabric.tropicalFit <= 2 && <PropPill label="Not for tropics" tone="warn" />}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ShopRow({ fabric, lifestyle }: { fabric: Fabric; lifestyle: Lifestyle }) {
+  const links = buildShopLinks(fabric.slug, lifestyle);
+  return (
+    <div className="bg-[var(--c-bg)] rounded-xl p-3">
+      <div className="flex items-center gap-2 mb-2">
+        <div
+          className="w-6 h-6 rounded-md border border-black/10 flex-shrink-0"
+          style={{ background: getFabricBackground(fabric.slug, fabric.category) }}
+          aria-hidden="true"
+        />
+        <p className="text-sm font-semibold text-[var(--c-ink)]">{fabric.name}</p>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {links.map((l) => (
+          <a
+            key={l.retailerId}
+            href={l.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded-full border border-[var(--c-line)] bg-[var(--c-surface)] text-[var(--c-ink-soft)] hover:border-[var(--c-accent)]/50 hover:text-[var(--c-ink)] transition-colors"
+          >
+            {l.retailerName}
+            <ExternalLink className="w-3 h-3 opacity-60" />
+          </a>
+        ))}
       </div>
     </div>
   );

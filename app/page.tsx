@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { ComingSoonCard } from "@/components/ComingSoonCard";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, Sparkles, Clock } from "lucide-react";
+import { ShieldCheck, Sparkles, Clock, Leaf, ArrowRight } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -89,6 +89,32 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Fabric & climate guide — live module, available without an analysis */}
+        <section className="max-w-3xl mx-auto px-6 py-16">
+          <div className="rounded-3xl bg-[var(--c-surface)] border border-[var(--c-line)] p-8 sm:p-10 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+            <div className="w-16 h-16 rounded-2xl bg-[var(--c-success)]/10 flex items-center justify-center flex-shrink-0">
+              <Leaf className="w-7 h-7 text-[var(--c-success)]" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--c-success)] mb-2">
+                New, no signup needed
+              </p>
+              <h2 className="font-display text-2xl sm:text-3xl font-semibold text-[var(--c-ink)] mb-2">
+                Fabric &amp; climate guide
+              </h2>
+              <p className="text-sm text-[var(--c-ink-soft)] leading-relaxed mb-4">
+                Tropical-smart fabric picks for Singapore and SEA. Linen, Tencel, and more, matched to your climate, lifestyle, and skin type. Includes a 20-fabric encyclopedia and live searches on Uniqlo, H&amp;M, Zara, Cos, Muji, and Pomelo.
+              </p>
+              <Link href="/fabric-guide">
+                <Button variant="secondary" size="md" className="gap-2">
+                  Open the guide
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* Coming soon modules */}
         <section className="max-w-3xl mx-auto px-6 py-16">
           <p className="text-xs font-semibold uppercase tracking-widest text-[var(--c-ink-soft)] text-center mb-3">
@@ -97,7 +123,7 @@ export default function HomePage() {
           <h2 className="font-display text-2xl sm:text-3xl font-semibold text-[var(--c-ink)] text-center mb-10">
             More intelligence, coming soon
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <ComingSoonCard
               icon="🪞"
               title="Body Type Analysis"
@@ -107,11 +133,6 @@ export default function HomePage() {
               icon="📐"
               title="Fit Intelligence"
               description="Per-brand sizing and fit guidance. Never order the wrong size again."
-            />
-            <ComingSoonCard
-              icon="🌿"
-              title="Fabric & Climate Guide"
-              description="Tropical-smart fabric picks for Singapore and SEA. Linen, Tencel, and more, matched to the humidity."
             />
             <ComingSoonCard
               icon="🛍️"

@@ -6,7 +6,7 @@ import type { FabricContext, FabricRecommendation } from "./fabric-rules";
 import { SEASON_FAMILY_ACCENT } from "./seasons";
 
 export async function generateFabricCard(
-  result: ColourResult,
+  result: ColourResult | null,
   ctx: FabricContext,
   reco: FabricRecommendation
 ): Promise<Blob> {
@@ -23,7 +23,7 @@ export async function generateFabricCard(
     try { await document.fonts.ready; } catch { /* fall through */ }
   }
 
-  const familyAccent = SEASON_FAMILY_ACCENT[result.seasonFamily] ?? "#5C7A57";
+  const familyAccent = result ? (SEASON_FAMILY_ACCENT[result.seasonFamily] ?? "#5C7A57") : "#5C7A57";
   const SUCCESS = "#5C7A57";
   const BG = "#F6F1EA";
   const INK = "#1F1B16";
@@ -67,7 +67,10 @@ export async function generateFabricCard(
   // Subline
   ctx2d.font = "italic 400 30px 'Hanken Grotesk', system-ui, sans-serif";
   ctx2d.fillStyle = INK_SOFT;
-  wrapText(ctx2d, `${ctx.lifestyle} · ${ctx.skin} skin · ${result.season}`, W / 2, 330, W - 160, 38, 2);
+  const subline = result
+    ? `${ctx.lifestyle} · ${ctx.skin} skin · ${result.season}`
+    : `${ctx.lifestyle} · ${ctx.skin} skin`;
+  wrapText(ctx2d, subline, W / 2, 330, W - 160, 38, 2);
 
   // Why
   ctx2d.font = "400 26px 'Hanken Grotesk', system-ui, sans-serif";

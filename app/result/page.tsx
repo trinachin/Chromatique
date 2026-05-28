@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { ShareDialog } from "@/components/ShareDialog";
 import { MaterialChip } from "@/components/MaterialChip";
 import { MakeupFeaturesSection } from "@/components/MakeupFeaturesSection";
-import { FabricGuideSection } from "@/components/FabricGuideSection";
 import { RefreshCw, AlertTriangle, Sparkles, Share2, Download, Gem, Brush, Scissors } from "lucide-react";
 import type { ColourResult } from "@/lib/types";
 import { getSeasonProfile, getSeasonDetails, getTaggedPalette, SEASON_FAMILY_ACCENT } from "@/lib/seasons";
@@ -22,8 +21,10 @@ export default function ResultPage() {
   const [result, setResult] = useState<ColourResult | null>(null);
   const [ready, setReady] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  // Photo only present in the original user's session, never on shared /r/ views
-  const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
+  // Photos only present in the original user's session, never on shared /r/ views.
+  // Array because a user can submit 1-3 photos for analysis and we let them
+  // save every one they took.
+  const [photoDataUrls, setPhotoDataUrls] = useState<string[]>([]);
 
   useEffect(() => {
     const raw = sessionStorage.getItem("chromatique_result");
@@ -31,9 +32,23 @@ export default function ResultPage() {
       router.replace("/analyze");
       return;
     }
-    // Read photo if it exists (original user session only)
-    const photo = sessionStorage.getItem("chromatique_photo");
-    if (photo) setPhotoDataUrl(photo);
+    // Read photo(s) if any exist (original user session only).
+    // New key: chromatique_photos (JSON array). Falls back to chromatique_photo
+    // (single dataURL) for older sessions.
+    try {
+      const photosRaw = sessionStorage.getItem("chromatique_photos");
+      if (photosRaw) {
+        const arr = JSON.parse(photosRaw);
+        if (Array.isArray(arr) && arr.every((p) => typeof p === "string")) {
+          setPhotoDataUrls(arr);
+        }
+      } else {
+        const single = sessionStorage.getItem("chromatique_photo");
+        if (single) setPhotoDataUrls([single]);
+      }
+    } catch {
+      // ignore, leave the photos empty
+    }
     try {
       const parsed: ColourResult = JSON.parse(raw);
       setResult(parsed);
@@ -104,41 +119,13 @@ export default function ResultPage() {
           </div>
         )}
 
-        {/* Analysed-photo thumbnail — original user session only. Never appears
-            on shared /r/ links. Lets the user save the photo they took. */}
-        {photoDataUrl && (
-          <section className="flex items-center gap-4 bg-[var(--c-surface)] rounded-2xl p-4 border border-[var(--c-line)]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={photoDataUrl}
-              alt="The photo we analysed"
-              className="w-20 h-20 rounded-xl object-cover flex-shrink-0 border border-[var(--c-line)]"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-soft)] mb-0.5">
-                Photo we analysed
-              </p>
-              <p className="text-[11px] text-[var(--c-ink-soft)]/70 leading-relaxed">
-                Discarded immediately after analysis. Yours to keep.
-              </p>
-            </div>
-            <Button
-              onClick={() => {
-                const a = document.createElement("a");
-                a.href = photoDataUrl;
-                a.download = `chromatique-${result.season.toLowerCase().replace(/\s+/g, "-")}-selfie.jpg`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-              }}
-              variant="secondary"
-              size="sm"
-              className="gap-1.5 flex-shrink-0"
-            >
-              <Download className="w-3.5 h-3.5" />
-              Save
-            </Button>
-          </section>
+        {/* Analysed photos — original user session only. Never appears on
+            shared /r/ links. Lets the user save every photo they took. */}
+        {photoDataUrls.length > 0 && (
+          <AnalysedPhotosPanel
+            photos={photoDataUrls}
+            seasonSlug={result.season.toLowerCase().replace(/\s+/g, "-")}
+          />
         )}
 
         {/* Season hero */}
@@ -313,9 +300,6 @@ export default function ResultPage() {
           <MakeupFeaturesSection features={result.features} result={result} />
         )}
 
-        {/* Fabric & climate guide — the brand's strategic differentiator */}
-        <FabricGuideSection result={result} />
-
         {/* Style note */}
         {result.styleNote && !lowConfidence && (
           <section className="bg-[var(--c-surface)] rounded-2xl p-6 border border-[var(--c-line)]">
@@ -411,5 +395,81 @@ function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }
       <span className="text-[var(--c-accent)]">{icon}</span>
       <h2 className="font-display text-xl font-semibold text-[var(--c-ink)]">{title}</h2>
     </div>
+  );
+}
+
+/** Gallery of every photo used for analysis with per-photo + Save all actions. */
+function AnalysedPhotosPanel({ photos, seasonSlug }: { photos: string[]; seasonSlug: string }) {
+  const count = photos.length;
+  const label = count === 1 ? "Photo we analysed" : `${count} photos we analysed`;
+
+  const downloadOne = (dataUrl: string, idx: number) => {
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `chromatique-${seasonSlug}-selfie-${idx + 1}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  const saveAll = async () => {
+    // Sequential download with a short gap so browsers don't suppress later files.
+    for (let i = 0; i < photos.length; i++) {
+      downloadOne(photos[i], i);
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((res) => setTimeout(res, 250));
+    }
+  };
+
+  return (
+    <section className="bg-[var(--c-surface)] rounded-2xl p-4 border border-[var(--c-line)]">
+      <div className="flex items-center justify-between mb-3 gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-soft)] mb-0.5">
+            {label}
+          </p>
+          <p className="text-[11px] text-[var(--c-ink-soft)]/70 leading-relaxed">
+            Discarded immediately after analysis. Yours to keep.
+          </p>
+        </div>
+        {count > 1 && (
+          <Button
+            onClick={saveAll}
+            variant="secondary"
+            size="sm"
+            className="gap-1.5 flex-shrink-0"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Save all
+          </Button>
+        )}
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        {photos.map((src, idx) => (
+          <div key={idx} className="relative group">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt={`Analysed photo ${idx + 1}`}
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl object-cover border border-[var(--c-line)]"
+            />
+            <button
+              onClick={() => downloadOne(src, idx)}
+              className="absolute bottom-1 right-1 bg-[var(--c-ink)]/75 hover:bg-[var(--c-ink)] text-white rounded-full w-7 h-7 flex items-center justify-center transition-colors"
+              aria-label={`Save photo ${idx + 1}`}
+              title={`Save photo ${idx + 1}`}
+            >
+              <Download className="w-3.5 h-3.5" />
+            </button>
+            {count > 1 && (
+              <span className="absolute top-1 left-1 bg-[var(--c-ink)]/75 text-white text-[10px] font-semibold rounded-full w-5 h-5 flex items-center justify-center">
+                {idx + 1}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
