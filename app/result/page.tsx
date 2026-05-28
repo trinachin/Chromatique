@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ShareDialog } from "@/components/ShareDialog";
 import { MaterialChip } from "@/components/MaterialChip";
 import { MakeupFeaturesSection } from "@/components/MakeupFeaturesSection";
+import { FabricGuideSection } from "@/components/FabricGuideSection";
 import { RefreshCw, AlertTriangle, Sparkles, Share2, Download, Gem, Brush, Scissors } from "lucide-react";
 import type { ColourResult } from "@/lib/types";
 import { getSeasonProfile, getSeasonDetails, getTaggedPalette, SEASON_FAMILY_ACCENT } from "@/lib/seasons";
@@ -312,6 +313,9 @@ export default function ResultPage() {
           <MakeupFeaturesSection features={result.features} result={result} />
         )}
 
+        {/* Fabric & climate guide — the brand's strategic differentiator */}
+        <FabricGuideSection result={result} />
+
         {/* Style note */}
         {result.styleNote && !lowConfidence && (
           <section className="bg-[var(--c-surface)] rounded-2xl p-6 border border-[var(--c-line)]">
@@ -337,11 +341,10 @@ export default function ResultPage() {
           <p className="text-xs font-semibold uppercase tracking-widest text-[var(--c-ink-soft)] mb-4">
             Coming soon
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {[
               { icon: "🪞", label: "Body analysis" },
               { icon: "📐", label: "Fit guide" },
-              { icon: "🌿", label: "Fabric picks" },
               { icon: "🛍️", label: "Product recs" },
             ].map(({ icon, label }) => (
               <div

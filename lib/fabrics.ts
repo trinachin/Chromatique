@@ -1,0 +1,482 @@
+// Fabric taxonomy + climate-relevant property scores.
+//
+// Each fabric is rated on 5-point scales for the properties that matter most
+// in the use cases Chromatique cares about:
+//   - breathability: air-flow through the fabric (5 = max breath)
+//   - wicking: pulls sweat away from skin (5 = pulls and dries fastest)
+//   - drape: how the fabric falls (1 = stiff, 5 = liquid)
+//   - wrinkle: how much it creases with wear (1 = never, 5 = lots)
+//   - durability: how it holds up to repeated washing/wear (5 = years)
+//
+// "tropicalFit" is a composite score (1-5) for how well the fabric performs
+// in hot + humid conditions. Used by the rules engine to rank recommendations.
+//
+// Sources synthesized from: textile-industry property charts, OEKO-TEX
+// documentation, the textile-science chapter of "Textiles" (Kadolph, 11th ed.),
+// and ADD_RESEARCH §4.2 (Singapore/SEA climate context).
+
+export type FabricCategory =
+  | "natural-plant"   // linen, cotton, hemp, ramie
+  | "natural-animal"  // silk, wool, cashmere
+  | "regenerated"     // Tencel, modal, viscose, bamboo
+  | "synthetic"       // polyester, nylon, acrylic
+  | "blend"           // mixed
+  | "specialty";      // seersucker, eyelet, gauze
+
+export type Tone = "warm" | "cool" | "neutral";
+
+export interface Fabric {
+  slug: string;
+  name: string;
+  alternativeNames?: string[];
+  category: FabricCategory;
+  source: string;                // what it's made from, plain English
+  texture: string;               // one-line texture description
+  /** 1 = poor for tropical, 5 = ideal */
+  tropicalFit: number;
+  /** 1-5 scales */
+  breathability: number;
+  wicking: number;
+  drape: number;
+  wrinkle: number;
+  durability: number;
+  /** Common occasions this fabric shines in */
+  occasions: ("Office" | "Weekend" | "Going out" | "Outdoor" | "Travel")[];
+  /** Quick-feel "tone" for matching season palettes */
+  warmthAffinity: Tone[];        // which seasons this is naturally well-suited to
+  /** Higher = more sustainable / responsible. 1-5 */
+  sustainability: number;
+  /** Skin-friendliness: useful for sensitive skin */
+  skinFriendly: number;          // 1-5
+  /** Care notes one-liner */
+  care: string;
+  /** Label keywords to look for when shopping */
+  labelKeywords: string[];
+  /** One-sentence "why this fabric matters" */
+  why: string;
+}
+
+export const FABRICS: Fabric[] = [
+  // ─── NATURAL PLANT (best for tropics) ─────────────────────────────────
+  {
+    slug: "linen",
+    name: "Linen",
+    alternativeNames: ["Flax"],
+    category: "natural-plant",
+    source: "Flax stalk fibres",
+    texture: "Crisp, textured, naturally cool to the touch",
+    tropicalFit: 5,
+    breathability: 5,
+    wicking: 5,
+    drape: 3,
+    wrinkle: 5,
+    durability: 4,
+    occasions: ["Office", "Weekend", "Going out", "Travel"],
+    warmthAffinity: ["warm", "neutral", "cool"],
+    sustainability: 5,
+    skinFriendly: 5,
+    care: "Machine wash cold, air-dry, iron when slightly damp. Wrinkles are the look.",
+    labelKeywords: ["100% Linen", "Pure Linen", "Linen blend"],
+    why: "The fastest-wicking natural fibre. Wrinkles freely but that's the texture you're buying.",
+  },
+  {
+    slug: "lightweight-cotton",
+    name: "Lightweight Cotton",
+    alternativeNames: ["Voile", "Batiste", "Cotton Lawn"],
+    category: "natural-plant",
+    source: "Cotton plant fibres, finely woven",
+    texture: "Smooth, soft, airy with a slight crispness",
+    tropicalFit: 4,
+    breathability: 4,
+    wicking: 3,
+    drape: 4,
+    wrinkle: 3,
+    durability: 4,
+    occasions: ["Office", "Weekend", "Going out"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 3,
+    skinFriendly: 5,
+    care: "Standard cotton care. Avoid hot dryer to preserve fibres.",
+    labelKeywords: ["100% Cotton", "Cotton voile", "Cotton lawn"],
+    why: "Workhorse for daily wear, breathable but not as wicking as linen.",
+  },
+  {
+    slug: "organic-cotton",
+    name: "Organic Cotton",
+    category: "natural-plant",
+    source: "Cotton grown without synthetic pesticides",
+    texture: "Same as cotton but free of chemical residues",
+    tropicalFit: 4,
+    breathability: 4,
+    wicking: 3,
+    drape: 3,
+    wrinkle: 3,
+    durability: 4,
+    occasions: ["Office", "Weekend", "Travel"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 5,
+    skinFriendly: 5,
+    care: "Same as cotton. Mild detergent preserves the no-residue benefit.",
+    labelKeywords: ["GOTS Certified", "Organic Cotton", "OEKO-TEX Standard 100"],
+    why: "For sensitive skin, the cleanest cotton you can buy. Avoids formaldehyde finishes.",
+  },
+  {
+    slug: "hemp",
+    name: "Hemp",
+    category: "natural-plant",
+    source: "Cannabis sativa plant stalks",
+    texture: "Slightly coarse initially, softens dramatically with washing",
+    tropicalFit: 5,
+    breathability: 5,
+    wicking: 5,
+    drape: 2,
+    wrinkle: 4,
+    durability: 5,
+    occasions: ["Outdoor", "Weekend", "Travel"],
+    warmthAffinity: ["warm", "neutral"],
+    sustainability: 5,
+    skinFriendly: 4,
+    care: "Machine wash, air-dry. Gets softer with every wash.",
+    labelKeywords: ["100% Hemp", "Hemp blend"],
+    why: "More durable than cotton, more breathable than linen. The sustainable wardrobe anchor.",
+  },
+  {
+    slug: "ramie",
+    name: "Ramie",
+    category: "natural-plant",
+    source: "Asian flowering plant fibre",
+    texture: "Crisp like linen but with a subtle sheen",
+    tropicalFit: 5,
+    breathability: 5,
+    wicking: 5,
+    drape: 2,
+    wrinkle: 4,
+    durability: 4,
+    occasions: ["Office", "Weekend"],
+    warmthAffinity: ["warm", "neutral"],
+    sustainability: 4,
+    skinFriendly: 4,
+    care: "Dry-clean for structured pieces, hand-wash casual.",
+    labelKeywords: ["Ramie", "Ramie blend"],
+    why: "Asian alternative to linen with a hint of luxury sheen.",
+  },
+
+  // ─── REGENERATED CELLULOSIC (excellent for tropics) ───────────────────
+  {
+    slug: "tencel-lyocell",
+    name: "Tencel",
+    alternativeNames: ["Lyocell"],
+    category: "regenerated",
+    source: "Sustainably sourced eucalyptus pulp",
+    texture: "Silky, smooth, slightly cool",
+    tropicalFit: 5,
+    breathability: 4,
+    wicking: 5,
+    drape: 5,
+    wrinkle: 2,
+    durability: 4,
+    occasions: ["Office", "Going out", "Travel"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 5,
+    skinFriendly: 5,
+    care: "Gentle wash, hang to dry. Resists wrinkles.",
+    labelKeywords: ["Tencel", "Lyocell", "TENCEL Lyocell"],
+    why: "The drape of silk with the breathability of cotton, and it's actually sustainable.",
+  },
+  {
+    slug: "modal",
+    name: "Modal",
+    category: "regenerated",
+    source: "Beech tree pulp",
+    texture: "Buttery soft, fluid drape",
+    tropicalFit: 4,
+    breathability: 4,
+    wicking: 4,
+    drape: 5,
+    wrinkle: 1,
+    durability: 4,
+    occasions: ["Weekend", "Office", "Travel"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 4,
+    skinFriendly: 5,
+    care: "Easy machine wash, shape-keeping after many washes.",
+    labelKeywords: ["Modal", "MicroModal"],
+    why: "Twice as absorbent as cotton, drapes like a dream, almost never wrinkles.",
+  },
+  {
+    slug: "ecovero-viscose",
+    name: "EcoVero Viscose",
+    alternativeNames: ["Viscose", "Rayon"],
+    category: "regenerated",
+    source: "Certified-sustainable wood pulp",
+    texture: "Soft, fluid, slightly cool",
+    tropicalFit: 4,
+    breathability: 4,
+    wicking: 3,
+    drape: 5,
+    wrinkle: 3,
+    durability: 3,
+    occasions: ["Going out", "Office", "Weekend"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 4,
+    skinFriendly: 4,
+    care: "Cold wash, hang dry. Conventional viscose can pill, so look for EcoVero or LENZING brands.",
+    labelKeywords: ["EcoVero", "LENZING Viscose", "Sustainable viscose"],
+    why: "The drape of silk at a fraction of the price. Picky about care.",
+  },
+  {
+    slug: "bamboo-lyocell",
+    name: "Bamboo Lyocell",
+    category: "regenerated",
+    source: "Bamboo pulp processed in closed-loop systems",
+    texture: "Silky, very cool against skin",
+    tropicalFit: 4,
+    breathability: 4,
+    wicking: 4,
+    drape: 4,
+    wrinkle: 2,
+    durability: 3,
+    occasions: ["Weekend", "Active", "Travel"] as Fabric["occasions"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 4,
+    skinFriendly: 5,
+    care: "Cold gentle wash. Look for closed-loop certification, conventional bamboo rayon is chemical-heavy.",
+    labelKeywords: ["Bamboo Lyocell", "Closed-loop bamboo"],
+    why: "Bamboo plant grows fast and clean, but check certification, lots of bamboo fabric is just chemically processed rayon.",
+  },
+
+  // ─── NATURAL ANIMAL ───────────────────────────────────────────────────
+  {
+    slug: "silk",
+    name: "Silk",
+    category: "natural-animal",
+    source: "Silkworm cocoons",
+    texture: "Liquid drape, gleaming surface",
+    tropicalFit: 4,
+    breathability: 4,
+    wicking: 3,
+    drape: 5,
+    wrinkle: 2,
+    durability: 3,
+    occasions: ["Going out", "Office"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 3,
+    skinFriendly: 4,
+    care: "Hand-wash cold or dry-clean. Sweat residue stains, treat promptly.",
+    labelKeywords: ["100% Silk", "Mulberry Silk", "Habotai", "Charmeuse"],
+    why: "Naturally temperature-regulating, but high-maintenance in tropical humidity.",
+  },
+  {
+    slug: "wool",
+    name: "Wool",
+    category: "natural-animal",
+    source: "Sheep fleece",
+    texture: "Warm, dimensional, often slightly itchy",
+    tropicalFit: 1,
+    breathability: 3,
+    wicking: 4,
+    drape: 3,
+    wrinkle: 1,
+    durability: 5,
+    occasions: ["Travel"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 4,
+    skinFriendly: 3,
+    care: "Hand-wash or dry-clean.",
+    labelKeywords: ["100% Wool", "Merino Wool", "Lambswool"],
+    why: "Best for air-con offices or travel to cooler climates. Skip for daily tropical wear.",
+  },
+
+  // ─── SPECIALTY WEAVES (tropical-specific) ─────────────────────────────
+  {
+    slug: "seersucker",
+    name: "Seersucker",
+    category: "specialty",
+    source: "Cotton (or blend) woven into puckered stripes",
+    texture: "Puckered texture lifts fabric off skin, creating air gaps",
+    tropicalFit: 5,
+    breathability: 5,
+    wicking: 4,
+    drape: 3,
+    wrinkle: 1,
+    durability: 4,
+    occasions: ["Office", "Weekend", "Going out"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 4,
+    skinFriendly: 5,
+    care: "Easy wash, no ironing required (the pucker IS the look).",
+    labelKeywords: ["Seersucker", "Cotton seersucker"],
+    why: "Built for tropics. The puckered weave keeps fabric off your skin, instant cool.",
+  },
+  {
+    slug: "dobby-cotton",
+    name: "Dobby Cotton",
+    category: "specialty",
+    source: "Cotton woven with small geometric patterns and air pockets",
+    texture: "Textured, slightly dimensional, very breathable",
+    tropicalFit: 5,
+    breathability: 5,
+    wicking: 4,
+    drape: 3,
+    wrinkle: 3,
+    durability: 4,
+    occasions: ["Office", "Weekend"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 3,
+    skinFriendly: 5,
+    care: "Standard cotton care.",
+    labelKeywords: ["Dobby weave", "Textured cotton"],
+    why: "Small woven holes mean better airflow than regular cotton, lovely for office shirts.",
+  },
+  {
+    slug: "eyelet-cotton",
+    name: "Eyelet Cotton",
+    alternativeNames: ["Broderie Anglaise"],
+    category: "specialty",
+    source: "Cotton with embroidered ventilation perforations",
+    texture: "Decorative perforations let air through",
+    tropicalFit: 5,
+    breathability: 5,
+    wicking: 3,
+    drape: 3,
+    wrinkle: 3,
+    durability: 3,
+    occasions: ["Weekend", "Going out"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 3,
+    skinFriendly: 5,
+    care: "Gentle wash to preserve embroidery.",
+    labelKeywords: ["Eyelet", "Broderie anglaise"],
+    why: "Romantic look with literal ventilation built in.",
+  },
+
+  // ─── BLENDS ──────────────────────────────────────────────────────────
+  {
+    slug: "linen-tencel",
+    name: "Linen-Tencel Blend",
+    category: "blend",
+    source: "Linen + Lyocell mix",
+    texture: "Crisp like linen but with silky drape and less wrinkle",
+    tropicalFit: 5,
+    breathability: 5,
+    wicking: 5,
+    drape: 4,
+    wrinkle: 3,
+    durability: 4,
+    occasions: ["Office", "Going out", "Travel"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 4,
+    skinFriendly: 5,
+    care: "Gentle wash, hang dry. Best of both fibres.",
+    labelKeywords: ["Linen-Tencel", "Linen-Lyocell blend"],
+    why: "The fix for linen's main downside. Wrinkles less, drapes better, same wicking.",
+  },
+  {
+    slug: "cotton-modal",
+    name: "Cotton-Modal Blend",
+    category: "blend",
+    source: "Cotton + beech-pulp modal mix",
+    texture: "Soft cotton hand with the fluid drape of modal",
+    tropicalFit: 4,
+    breathability: 4,
+    wicking: 4,
+    drape: 4,
+    wrinkle: 2,
+    durability: 4,
+    occasions: ["Weekend", "Office", "Travel"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 3,
+    skinFriendly: 5,
+    care: "Standard wash, shape-keeping.",
+    labelKeywords: ["Cotton-Modal", "Cotton/Modal"],
+    why: "More comfortable than pure cotton for daily wear, especially tees and base layers.",
+  },
+
+  // ─── SYNTHETICS (mostly avoid) ───────────────────────────────────────
+  {
+    slug: "polyester",
+    name: "Polyester",
+    category: "synthetic",
+    source: "Petroleum-derived plastic fibre",
+    texture: "Slippery to plasticky, traps heat against skin",
+    tropicalFit: 1,
+    breathability: 1,
+    wicking: 1,
+    drape: 3,
+    wrinkle: 1,
+    durability: 5,
+    occasions: ["Travel"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 1,
+    skinFriendly: 2,
+    care: "Easy wash but builds up odours.",
+    labelKeywords: ["Polyester", "PET"],
+    why: "Cheap, wrinkle-proof, but traps body heat. Skip for tropical wear. Performance polyesters (Dri-FIT) are a different story.",
+  },
+  {
+    slug: "performance-synthetic",
+    name: "Performance Synthetic",
+    alternativeNames: ["Dri-FIT", "Coolmax"],
+    category: "synthetic",
+    source: "Engineered polyester or nylon with wicking channels",
+    texture: "Smooth, lightweight, designed to wick",
+    tropicalFit: 4,
+    breathability: 3,
+    wicking: 5,
+    drape: 2,
+    wrinkle: 1,
+    durability: 5,
+    occasions: ["Outdoor", "Travel"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 2,
+    skinFriendly: 3,
+    care: "Cold wash, avoid fabric softener (clogs wicking).",
+    labelKeywords: ["Dri-FIT", "Coolmax", "Wicking polyester", "Performance fabric"],
+    why: "Right tool for sweaty workouts and humid outdoor commutes. Wrong tool for daily wear.",
+  },
+  {
+    slug: "nylon",
+    name: "Nylon",
+    category: "synthetic",
+    source: "Petroleum-derived polyamide",
+    texture: "Smooth and stretchy",
+    tropicalFit: 1,
+    breathability: 1,
+    wicking: 1,
+    drape: 4,
+    wrinkle: 1,
+    durability: 5,
+    occasions: ["Travel"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 1,
+    skinFriendly: 3,
+    care: "Standard wash.",
+    labelKeywords: ["Nylon", "Polyamide"],
+    why: "Use only in technical gear (swimwear, rain shells). Avoid in everyday wear.",
+  },
+  {
+    slug: "acrylic",
+    name: "Acrylic",
+    category: "synthetic",
+    source: "Petroleum-derived plastic, mimics wool",
+    texture: "Fluffy but traps heat and sweat",
+    tropicalFit: 1,
+    breathability: 1,
+    wicking: 1,
+    drape: 3,
+    wrinkle: 2,
+    durability: 3,
+    occasions: ["Travel"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 1,
+    skinFriendly: 2,
+    care: "Standard wash, pills easily.",
+    labelKeywords: ["Acrylic"],
+    why: "Worst fabric for tropics. Plastic that pretends to be wool. Skip entirely.",
+  },
+];
+
+/** Lookup helper. */
+export function getFabric(slug: string): Fabric | undefined {
+  return FABRICS.find((f) => f.slug === slug);
+}
