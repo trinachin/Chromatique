@@ -13,6 +13,7 @@ import { RefreshCw, AlertTriangle, Sparkles, Share2, Download, Gem, Brush, Sciss
 import type { ColourResult } from "@/lib/types";
 import { getSeasonProfile, getSeasonDetails, getTaggedPalette, SEASON_FAMILY_ACCENT } from "@/lib/seasons";
 import { generateShareCard } from "@/lib/share-card";
+import { encodeResult } from "@/lib/result-codec";
 import { cn } from "@/lib/utils";
 
 export default function ResultPage() {
@@ -28,8 +29,22 @@ export default function ResultPage() {
       return;
     }
     try {
-      setResult(JSON.parse(raw));
+      const parsed: ColourResult = JSON.parse(raw);
+      setResult(parsed);
       setTimeout(() => setReady(true), 100);
+
+      // Encode the result into the URL itself so the page is shareable.
+      // Zero backend, zero storage cost. The URL IS the database.
+      // Skip if URL is already /r/* (we arrived from a shared link).
+      if (!window.location.pathname.startsWith("/r/")) {
+        try {
+          const encoded = encodeResult(parsed);
+          window.history.replaceState(null, "", `/r/${encoded}`);
+        } catch {
+          // If encoding fails, leave the URL as /result. Share will fall back
+          // to the homepage URL, which still works as an entry point.
+        }
+      }
     } catch {
       router.replace("/analyze");
     }
@@ -328,7 +343,7 @@ export default function ResultPage() {
         open={shareOpen}
         onClose={() => setShareOpen(false)}
         result={result}
-        url={typeof window !== "undefined" ? `${window.location.origin}/` : "https://chromatique-trina1.vercel.app/"}
+        url={typeof window !== "undefined" ? window.location.href : "https://chromatique-trina1.vercel.app/"}
       />
     </div>
   );
