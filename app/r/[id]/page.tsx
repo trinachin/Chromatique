@@ -29,6 +29,9 @@ export default function SharedResultPage({ params }: PageProps) {
       return;
     }
     sessionStorage.setItem("chromatique_result", JSON.stringify(result));
+    // Clear any stale photo from a previous session — recipients of a shared
+    // link never see the original user's selfie. (Photo is never in the URL.)
+    sessionStorage.removeItem("chromatique_photo");
     router.replace("/result");
   }, [id, router]);
 

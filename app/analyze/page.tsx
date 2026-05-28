@@ -193,6 +193,10 @@ export default function AnalyzePage() {
       if (result.confidence >= HIGH_CONFIDENCE_THRESHOLD) {
         // Confident enough, ship directly
         sessionStorage.setItem("chromatique_result", JSON.stringify(result));
+        // Stash the analysed photo so /result can show a small thumbnail + Save.
+        // Privacy: this lives only in the user's sessionStorage; never sent to
+        // a server, never included in the shared /r/ URL.
+        sessionStorage.setItem("chromatique_photo", imageDataUrl);
         router.push("/result");
       } else {
         // Low confidence, offer to take 2 more photos for aggregation
@@ -207,7 +211,7 @@ export default function AnalyzePage() {
 
   /** Submit photos 2 + 3 in parallel, vote across all 3, route to result. */
   const finalAnalyseMulti = async () => {
-    if (!firstResult || extraPhotos.length !== 2) return;
+    if (!firstResult || extraPhotos.length < 1) return;
     setStage("analysing_extra");
     setAnalysisStep(0);
     const stepInterval = setInterval(() => {
@@ -230,13 +234,11 @@ export default function AnalyzePage() {
         return res.json();
       };
 
-      const [r2, r3] = await Promise.all([
-        analyseDataUrl(extraPhotos[0]),
-        analyseDataUrl(extraPhotos[1]),
-      ]);
+      // Run all available extras in parallel (1 or 2)
+      const extras = await Promise.all(extraPhotos.map(analyseDataUrl));
 
       clearInterval(stepInterval);
-      const voted = voteResults([firstResult, r2, r3]);
+      const voted = voteResults([firstResult, ...extras]);
       // Persist agreement metadata too (result page can display "confirmed by 3 photos")
       const enriched = {
         ...voted.result,
@@ -246,6 +248,9 @@ export default function AnalyzePage() {
         },
       };
       sessionStorage.setItem("chromatique_result", JSON.stringify(enriched));
+      // Stash the FIRST photo only (the user's primary capture) for the /result thumbnail.
+      // Privacy: never sent to a server, never in the shared /r/ URL.
+      if (preview) sessionStorage.setItem("chromatique_photo", preview);
       router.push("/result");
     } catch (err) {
       clearInterval(stepInterval);
@@ -276,6 +281,7 @@ export default function AnalyzePage() {
   const useFirstAnyway = () => {
     if (!firstResult) return;
     sessionStorage.setItem("chromatique_result", JSON.stringify(firstResult));
+    if (preview) sessionStorage.setItem("chromatique_photo", preview);
     router.push("/result");
   };
 
@@ -356,19 +362,26 @@ export default function AnalyzePage() {
   // Collecting extra photos (slots 2 + 3)
   if (stage === "collecting_extra" && firstResult && preview) {
     const slots = [preview, extraPhotos[0] ?? null, extraPhotos[1] ?? null];
-    const ready = extraPhotos.length === 2;
+    const ready = extraPhotos.length >= 1;
+    const totalPhotos = 1 + extraPhotos.length;
     return (
       <div className="min-h-screen flex flex-col bg-[var(--c-bg)]">
         <Navbar />
         <main className="flex-1 max-w-lg mx-auto w-full px-6 py-12">
           <div className="text-center mb-8">
             <h1 className="font-display text-2xl sm:text-3xl font-bold text-[var(--c-ink)] mb-2">
-              {ready ? "Ready to cross-check" : `Add ${2 - extraPhotos.length} more photo${extraPhotos.length === 1 ? "" : "s"}`}
+              {!ready
+                ? "Add at least 1 more photo"
+                : extraPhotos.length === 1
+                  ? "Ready when you are"
+                  : "Ready to cross-check"}
             </h1>
             <p className="text-sm text-[var(--c-ink-soft)]">
-              {ready
-                ? "We'll analyse all 3 and return the consensus."
-                : "Try a different angle or lighting for each."}
+              {!ready
+                ? "1 more for a cross-check, 2 more for highest confidence."
+                : extraPhotos.length === 1
+                  ? `We'll cross-check ${totalPhotos} photos. Add 1 more for highest confidence.`
+                  : "We'll analyse all 3 photos and return the consensus."}
             </p>
           </div>
 
@@ -474,7 +487,9 @@ export default function AnalyzePage() {
             className="w-full"
             disabled={!ready}
           >
-            {ready ? "Analyse all 3 photos →" : "Add more photos to continue"}
+            {ready
+              ? `Analyse ${1 + extraPhotos.length} photo${extraPhotos.length === 0 ? "" : "s"} →`
+              : "Add at least 1 photo to continue"}
           </Button>
 
           <button

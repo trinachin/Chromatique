@@ -1,109 +1,151 @@
-// URL-encoded sharing: pack the analysis-specific fields into a base64url
-// string that lives in /r/{encoded}. The palette + avoid colours are looked
-// up from seasons.ts at view-time, so we don't need to ship them in the URL.
+// URL-encoded sharing for ColourResult. Aggressive minification keeps the
+// /r/{encoded} URL under ~200 chars by:
+//   1. Encoding enum fields as integer codes (e.g. eye shape "Monolid" → 2)
+//   2. Dropping the Claude-generated text (styleNote, features.notes) from
+//      the URL. On view, recipients see the canonical season description
+//      from lib/seasons.ts instead of the personalised paragraph.
+//   3. Using single-character field keys.
 //
-// Why this approach: no backend storage, no signup, no credit card, no
-// monthly limits. The URL is the database. Trade-off is a longer URL
-// (~400-700 chars) but messaging apps handle that fine.
-//
-// Privacy: still no photo. We encode only the season name + classification
-// + features + style note (text) + optional aggregation metadata.
+// Privacy: NO photo, NO PII. Just classification + feature category labels.
 
 import type {
-  ColourResult, EyeShape, NoseType, LipShape, FaceShape, BrowShape,
-  RefinedUndertone, SkinTexture,
+  ColourResult, ColourSwatch, EyeShape, NoseType, LipShape, FaceShape, BrowShape,
+  RefinedUndertone, SkinTexture, SeasonFamily, Undertone,
 } from "./types";
-import { getSeasonProfile } from "./seasons";
+import { getSeasonProfile, SEASON_NAMES, type SeasonName } from "./seasons";
 
-/** Minimal payload that lives in the URL. Palette/avoid reconstructed at decode time. */
-interface CompactResult {
-  s: string;          // season name (key into seasons.ts)
-  f: ColourResult["seasonFamily"];
-  u: ColourResult["undertone"];
-  m?: string;         // monkToneBand (optional)
-  c: number;          // confidence (0..1, 2 decimals)
-  n: string;          // styleNote
-  // features (optional, compact letter keys)
-  ft?: {
-    e: string; // eyeShape
-    no: string; // noseType
-    l: string; // lipShape
-    fa: string; // faceShape
-    b: string; // browShape
-    ru: string; // refinedUndertone
-    sk: string; // skinTexture
-    nt: string; // notes
-  };
-  // aggregation (optional)
-  a?: { ic: number; ag: number };
+// ── enum code tables ────────────────────────────────────────────────────
+
+// Season family + undertone are short (1 char already plausible)
+const FAMILIES: SeasonFamily[] = ["Spring", "Summer", "Autumn", "Winter"];
+const UNDERTONES: Undertone[] = ["warm", "cool", "neutral"];
+
+const EYE_SHAPES: EyeShape[] = [
+  "Almond","Round","Monolid","Hooded monolid","Parallel double-lid",
+  "Outer double-lid","Hooded","Downturned","Upturned","Deep-set",
+];
+const NOSE_TYPES: NoseType[] = [
+  "Button","Straight","Aquiline","Snub","Low-bridge","Wide","Long","Short",
+];
+const LIP_SHAPES: LipShape[] = [
+  "Full","Thin","Heart-shaped","Bow-shaped","Downturned","Wide","Round",
+  "Top-heavy","Bottom-heavy",
+];
+const FACE_SHAPES: FaceShape[] = [
+  "Oval","Round","Square","Heart","Diamond","Oblong","Triangle",
+];
+const BROW_SHAPES: BrowShape[] = [
+  "Straight","Soft arch","High arch","Rounded","Flat",
+];
+const REFINED_UNDERTONES: RefinedUndertone[] = ["warm","cool","neutral","olive"];
+const SKIN_TEXTURES: SkinTexture[] = ["Smooth","Combination","Textured"];
+
+function codeOf<T extends string>(list: T[], v: T): number {
+  const i = list.indexOf(v);
+  return i < 0 ? 0 : i;
+}
+function fromCode<T extends string>(list: T[], code: number): T {
+  return list[code] ?? list[0];
 }
 
-function toCompact(r: ColourResult): CompactResult {
-  const compact: CompactResult = {
-    s: r.season,
-    f: r.seasonFamily,
-    u: r.undertone,
-    c: Math.round(r.confidence * 100) / 100,
-    n: r.styleNote,
+// Season name is also coded by its index into SEASON_NAMES (0-15)
+function seasonCode(name: string): number {
+  const i = SEASON_NAMES.indexOf(name as SeasonName);
+  return i < 0 ? 0 : i;
+}
+function seasonFromCode(code: number): SeasonName {
+  return SEASON_NAMES[code] ?? SEASON_NAMES[0];
+}
+
+// ── compact wire format ─────────────────────────────────────────────────
+
+/**
+ * Wire format. Single-character keys. Integer codes for enums.
+ *   s = season code (0-15)
+ *   f = family code (0-3)
+ *   u = undertone code (0-2)
+ *   c = confidence × 100 rounded (0-100)
+ *   x = features tuple [eye, nose, lip, face, brow, refUndertone, skin] codes
+ *   a = aggregation [inputCount, agreement×100]
+ */
+interface Wire {
+  s: number;
+  f: number;
+  u: number;
+  c: number;
+  x?: [number, number, number, number, number, number, number];
+  a?: [number, number];
+}
+
+function toWire(r: ColourResult): Wire {
+  const w: Wire = {
+    s: seasonCode(r.season),
+    f: codeOf(FAMILIES, r.seasonFamily),
+    u: codeOf(UNDERTONES, r.undertone),
+    c: Math.round(r.confidence * 100),
   };
-  if (r.monkToneBand) compact.m = r.monkToneBand;
   if (r.features) {
-    compact.ft = {
-      e:  r.features.eyeShape,
-      no: r.features.noseType,
-      l:  r.features.lipShape,
-      fa: r.features.faceShape,
-      b:  r.features.browShape,
-      ru: r.features.refinedUndertone,
-      sk: r.features.skinTexture,
-      nt: r.features.notes,
-    };
+    w.x = [
+      codeOf(EYE_SHAPES, r.features.eyeShape),
+      codeOf(NOSE_TYPES, r.features.noseType),
+      codeOf(LIP_SHAPES, r.features.lipShape),
+      codeOf(FACE_SHAPES, r.features.faceShape),
+      codeOf(BROW_SHAPES, r.features.browShape),
+      codeOf(REFINED_UNDERTONES, r.features.refinedUndertone),
+      codeOf(SKIN_TEXTURES, r.features.skinTexture),
+    ];
   }
   if (r.aggregation) {
-    compact.a = {
-      ic: r.aggregation.inputCount,
-      ag: Math.round(r.aggregation.agreement * 100) / 100,
-    };
+    w.a = [r.aggregation.inputCount, Math.round(r.aggregation.agreement * 100)];
   }
-  return compact;
+  return w;
 }
 
-function fromCompact(c: CompactResult): ColourResult | null {
-  const profile = getSeasonProfile(c.s);
+function fromWire(w: Wire): ColourResult | null {
+  const seasonName = seasonFromCode(w.s);
+  const profile = getSeasonProfile(seasonName);
   if (!profile) return null;
 
+  // styleNote: fall back to the canonical season description so recipients
+  // get readable copy without us having to ship Claude's personalised text
+  // in the URL.
+  const styleNote = profile.description;
+
   const result: ColourResult = {
-    season: c.s,
-    seasonFamily: c.f,
-    undertone: c.u,
-    monkToneBand: c.m ?? "",
-    palette: profile.palette,
-    avoid: profile.avoid,
-    styleNote: c.n,
-    confidence: c.c,
+    season: seasonName,
+    seasonFamily: FAMILIES[w.f] ?? "Spring",
+    undertone: UNDERTONES[w.u] ?? "neutral",
+    monkToneBand: "",
+    palette: profile.palette as ColourSwatch[],
+    avoid: profile.avoid as ColourSwatch[],
+    styleNote,
+    confidence: Math.max(0, Math.min(1, w.c / 100)),
   };
-  if (c.ft) {
+  if (w.x) {
     result.features = {
-      eyeShape: c.ft.e as EyeShape,
-      noseType: c.ft.no as NoseType,
-      lipShape: c.ft.l as LipShape,
-      faceShape: c.ft.fa as FaceShape,
-      browShape: c.ft.b as BrowShape,
-      refinedUndertone: c.ft.ru as RefinedUndertone,
-      skinTexture: c.ft.sk as SkinTexture,
-      notes: c.ft.nt,
+      eyeShape: fromCode(EYE_SHAPES, w.x[0]),
+      noseType: fromCode(NOSE_TYPES, w.x[1]),
+      lipShape: fromCode(LIP_SHAPES, w.x[2]),
+      faceShape: fromCode(FACE_SHAPES, w.x[3]),
+      browShape: fromCode(BROW_SHAPES, w.x[4]),
+      refinedUndertone: fromCode(REFINED_UNDERTONES, w.x[5]),
+      skinTexture: fromCode(SKIN_TEXTURES, w.x[6]),
+      // No personalised notes on shared view; UI degrades gracefully when empty
+      notes: "",
     };
   }
-  if (c.a) {
-    result.aggregation = { inputCount: c.a.ic, agreement: c.a.ag };
+  if (w.a) {
+    result.aggregation = {
+      inputCount: w.a[0],
+      agreement: Math.max(0, Math.min(1, w.a[1] / 100)),
+    };
   }
   return result;
 }
 
-// ── base64url ────────────────────────────────────────────────────────────
+// ── base64url ───────────────────────────────────────────────────────────
 
 function base64urlEncode(s: string): string {
-  // Browser: btoa over a UTF-8 byte string
   const utf8 = new TextEncoder().encode(s);
   let bin = "";
   utf8.forEach((b) => (bin += String.fromCharCode(b)));
@@ -111,7 +153,6 @@ function base64urlEncode(s: string): string {
 }
 
 function base64urlDecode(s: string): string {
-  // Pad to multiple of 4
   const padded = s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4);
   const bin = atob(padded);
   const bytes = new Uint8Array(bin.length);
@@ -119,19 +160,19 @@ function base64urlDecode(s: string): string {
   return new TextDecoder().decode(bytes);
 }
 
-// ── public ───────────────────────────────────────────────────────────────
+// ── public ──────────────────────────────────────────────────────────────
 
 export function encodeResult(result: ColourResult): string {
-  const compact = toCompact(result);
-  const json = JSON.stringify(compact);
+  const wire = toWire(result);
+  const json = JSON.stringify(wire);
   return base64urlEncode(json);
 }
 
 export function decodeResult(encoded: string): ColourResult | null {
   try {
     const json = base64urlDecode(encoded);
-    const compact = JSON.parse(json) as CompactResult;
-    return fromCompact(compact);
+    const wire = JSON.parse(json) as Wire;
+    return fromWire(wire);
   } catch {
     return null;
   }

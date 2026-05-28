@@ -21,6 +21,8 @@ export default function ResultPage() {
   const [result, setResult] = useState<ColourResult | null>(null);
   const [ready, setReady] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  // Photo only present in the original user's session, never on shared /r/ views
+  const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const raw = sessionStorage.getItem("chromatique_result");
@@ -28,6 +30,9 @@ export default function ResultPage() {
       router.replace("/analyze");
       return;
     }
+    // Read photo if it exists (original user session only)
+    const photo = sessionStorage.getItem("chromatique_photo");
+    if (photo) setPhotoDataUrl(photo);
     try {
       const parsed: ColourResult = JSON.parse(raw);
       setResult(parsed);
@@ -96,6 +101,43 @@ export default function ResultPage() {
               </Link>
             </div>
           </div>
+        )}
+
+        {/* Analysed-photo thumbnail — original user session only. Never appears
+            on shared /r/ links. Lets the user save the photo they took. */}
+        {photoDataUrl && (
+          <section className="flex items-center gap-4 bg-[var(--c-surface)] rounded-2xl p-4 border border-[var(--c-line)]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photoDataUrl}
+              alt="The photo we analysed"
+              className="w-20 h-20 rounded-xl object-cover flex-shrink-0 border border-[var(--c-line)]"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-soft)] mb-0.5">
+                Photo we analysed
+              </p>
+              <p className="text-[11px] text-[var(--c-ink-soft)]/70 leading-relaxed">
+                Discarded immediately after analysis. Yours to keep.
+              </p>
+            </div>
+            <Button
+              onClick={() => {
+                const a = document.createElement("a");
+                a.href = photoDataUrl;
+                a.download = `chromatique-${result.season.toLowerCase().replace(/\s+/g, "-")}-selfie.jpg`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+              }}
+              variant="secondary"
+              size="sm"
+              className="gap-1.5 flex-shrink-0"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Save
+            </Button>
+          </section>
         )}
 
         {/* Season hero */}
