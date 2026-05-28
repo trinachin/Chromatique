@@ -11,7 +11,7 @@
 //     human-friendly URL, not the deployment-specific one.
 
 /** The canonical user-facing domain. No trailing slash. */
-export const PUBLIC_URL = "https://chromatique-trina1.vercel.app";
+export const PUBLIC_URL = "https://getchromatique.vercel.app";
 
 /** Hostname-only form for footer text in saveable cards. */
 export const PUBLIC_HOST = PUBLIC_URL.replace(/^https?:\/\//, "");
