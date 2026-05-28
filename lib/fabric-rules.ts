@@ -1,23 +1,30 @@
-// Rules engine: given a user context (climate, lifestyle, skin sensitivity,
-// season family), produce a personalised set of recommended + avoid fabrics
-// plus a "why this works for you" explanation.
+// Rules engine: given a user context (climate, lifestyle, body thermal,
+// skin sensitivity, season family), produce a personalised set of
+// recommended + avoid fabrics plus a "why this works for YOU" explanation.
 //
 // Scoring approach:
 //   - Each fabric has objective property scores (lib/fabrics.ts)
 //   - User context defines weights for those properties
 //   - Score = weighted sum, then sort descending → anchors / skips
+//
+// USP axes (per FABRIC_RESEARCH + user direction):
+//   - bodyThermal: hot-runners vs cold-runners get different fabric biases
+//   - skin: 3-level (Normal / Sensitive / Eczema) drives a strong
+//     eczemaFriendly multiplier when set to Eczema
 
 import { FABRICS, type Fabric } from "./fabrics";
 import type { SeasonFamily } from "./types";
 
 export type Climate = "Tropical" | "Temperate" | "Mixed" | "Cold";
 export type Lifestyle = "Office indoor" | "Outdoor commute" | "Active" | "Mixed";
-export type SkinSensitivity = "Normal" | "Sensitive";
+export type SkinSensitivity = "Normal" | "Sensitive" | "Dry";
+export type BodyThermal = "Hot-prone" | "Balanced" | "Cold-prone";
 
 export interface FabricContext {
   climate: Climate;
   lifestyle: Lifestyle;
   skin: SkinSensitivity;
+  bodyThermal: BodyThermal;
   seasonFamily?: SeasonFamily;
 }
 
@@ -25,6 +32,8 @@ export interface FabricRecommendation {
   anchors: Fabric[];
   skip: Fabric[];
   whyItWorks: string;
+  /** Plain-language matchup chips, e.g. "Smooth for eczema", "Warms in air-con" */
+  personalReasons: string[];
 }
 
 // Property weights per climate. Higher = matters more for THIS climate.
@@ -50,10 +59,34 @@ const LIFESTYLE_BIAS: Record<Lifestyle, Partial<{ tropicalFit: number; wicking: 
   "Mixed":             { wicking: 1, tropicalFit: 0.5 },
 };
 
-// Skin sensitivity multiplies the skinFriendly weight
+// Skin sensitivity multiplies the skinFriendly weight; Sensitive additionally
+// applies a strong eczemaFriendly multiplier so silk, organic cotton, TENCEL,
+// modal, seersucker rank way above wool, acrylic, polyester fleece. Dry skin
+// uses a separate dryFriendly weight that favours moisture-retaining smooth
+// fibres (silk, modal, TENCEL) and penalises moisture-stripping performance
+// synthetics.
 const SKIN_FRIENDLY_WEIGHT: Record<SkinSensitivity, number> = {
-  Normal:    0.5,
+  Normal:    0.25,
   Sensitive: 2,
+  Dry:       1.5,
+};
+const SENSITIVE_BONUS_WEIGHT = 2.5;  // applied on eczemaFriendly when skin === "Sensitive"
+const DRY_BONUS_WEIGHT = 3;          // applied on dryFriendly when skin === "Dry"
+
+// Body-thermal weights: hot-prone users care about hotRunner score, cold-prone
+// users care about coldRunner score. Balanced users get a mild blend.
+// (The Fabric data property is still named thermalFit.hotRunner / coldRunner
+// because those are well-known textile-science terms; the user-facing label is
+// the friendlier Hot-prone / Cold-prone.)
+const BODY_THERMAL_HOT_WEIGHT: Record<BodyThermal, number> = {
+  "Hot-prone":  2.5,
+  "Balanced":   1,
+  "Cold-prone": 0,
+};
+const BODY_THERMAL_COLD_WEIGHT: Record<BodyThermal, number> = {
+  "Hot-prone":  0,
+  "Balanced":   0.5,
+  "Cold-prone": 2.5,
 };
 
 function scoreFabric(f: Fabric, ctx: FabricContext): number {
@@ -66,6 +99,18 @@ function scoreFabric(f: Fabric, ctx: FabricContext): number {
     f.durability    * w.durability +
     f.tropicalFit   * w.tropicalFit +
     f.skinFriendly  * SKIN_FRIENDLY_WEIGHT[ctx.skin];
+
+  // Sensitive: heavy eczemaFriendly weight (smooth, no harsh finishes)
+  // Dry: heavy dryFriendly weight (moisture-retaining, low friction)
+  if (ctx.skin === "Sensitive") {
+    score += f.eczemaFriendly * SENSITIVE_BONUS_WEIGHT;
+  } else if (ctx.skin === "Dry") {
+    score += f.dryFriendly * DRY_BONUS_WEIGHT;
+  }
+
+  // Body thermal preference
+  score += f.thermalFit.hotRunner  * BODY_THERMAL_HOT_WEIGHT[ctx.bodyThermal];
+  score += f.thermalFit.coldRunner * BODY_THERMAL_COLD_WEIGHT[ctx.bodyThermal];
 
   const lifestyleBias = LIFESTYLE_BIAS[ctx.lifestyle];
   if (lifestyleBias.tropicalFit) score += f.tropicalFit * lifestyleBias.tropicalFit;
@@ -88,37 +133,67 @@ export function recommendFabrics(ctx: FabricContext): FabricRecommendation {
   const skip = skipRaw.map((s) => s.fabric);
 
   const whyItWorks = composeWhy(ctx, anchors);
+  const personalReasons = composePersonalReasons(ctx);
 
-  return { anchors, skip, whyItWorks };
+  return { anchors, skip, whyItWorks, personalReasons };
 }
 
 function composeWhy(ctx: FabricContext, anchors: Fabric[]): string {
   const topNames = anchors.slice(0, 3).map((f) => f.name).join(", ");
 
   const climatePart = {
-    Tropical: "In hot, humid weather, breathable plant and cellulosic fibres wick sweat and let air move across your skin.",
-    Temperate: "In moderate weather, you want fabrics that drape well and adapt to layering through the day.",
+    Tropical: "In hot, humid weather, plant and cellulosic fibres wick sweat and let air move across your skin.",
+    Temperate: "In moderate weather, drape and adaptability through the day matter most.",
     Mixed: "Your changing climate calls for fabrics that breathe in the heat and layer cleanly when it cools.",
-    Cold: "In cool weather, drape and warmth matter more than wicking. Look for fabrics that hold their shape.",
+    Cold: "In cool weather, drape, warmth, and shape-keeping matter more than wicking.",
   }[ctx.climate];
 
-  const lifestylePart = {
-    "Office indoor": "Your office commute and air-conditioned days mean fabrics that resist wrinkles and feel polished.",
-    "Outdoor commute": "Outdoor stretches mean wicking matters as much as breathability. Fast-drying fibres win.",
-    "Active": "Active days demand performance: fast wicking, quick drying, durable washing.",
-    "Mixed": "A varied day-to-day calls for versatile fibres that handle indoor cool and outdoor heat.",
-  }[ctx.lifestyle];
+  const thermalPart: Record<BodyThermal, string> = {
+    "Hot-prone":  "You overheat easily, so the engine pushes maximum airflow and moisture release to the top.",
+    "Balanced":   "",
+    "Cold-prone": "You feel cold easily, so thermo-regulating fibres (silk, fine merino, TENCEL) and layering pieces bias toward the top.",
+  };
 
-  const skinPart = ctx.skin === "Sensitive"
-    ? "Your sensitive skin benefits from natural and OEKO-TEX certified fibres without chemical finishes."
-    : "";
+  const skinPart: Record<SkinSensitivity, string> = {
+    Normal: "",
+    Sensitive: "For sensitive or reactive skin: smooth-surface fibres and OEKO-TEX certified options without harsh finishes. Silk, organic cotton, TENCEL, modal, and silky bamboo lyocell rise to the top. Wool and pill-prone acrylic are filtered out.",
+    Dry: "For dry skin: moisture-retaining smooth fibres (silk, modal, TENCEL, cotton-modal) are prioritised. Moisture-stripping performance synthetics drop, friction-prone weaves are deprioritised.",
+  };
+
+  const lifestylePart = {
+    "Office indoor": "Your air-conditioned days call for fabrics that resist wrinkles and feel polished.",
+    "Outdoor commute": "Wicking matters as much as breathability. Fast-drying fibres win.",
+    "Active": "Fast wicking, quick drying, durable washing.",
+    "Mixed": "A varied day calls for versatile fibres that handle indoor cool and outdoor heat.",
+  }[ctx.lifestyle];
 
   return [
     `${topNames} are your wardrobe anchors.`,
     climatePart,
+    thermalPart[ctx.bodyThermal],
     lifestylePart,
-    skinPart,
+    skinPart[ctx.skin],
   ].filter(Boolean).join(" ");
+}
+
+/** Short chip-sized reasons that explain why this user's anchors are this way. */
+function composePersonalReasons(ctx: FabricContext): string[] {
+  const reasons: string[] = [];
+
+  if (ctx.climate === "Tropical") reasons.push("Tropical-optimised");
+  if (ctx.climate === "Cold") reasons.push("Cool-climate biased");
+
+  if (ctx.bodyThermal === "Hot-prone") reasons.push("Maximum airflow for hot-prone bodies");
+  if (ctx.bodyThermal === "Cold-prone") reasons.push("Thermoregulating for cold-prone bodies");
+
+  if (ctx.skin === "Sensitive") reasons.push("Smooth and finish-free for sensitive skin");
+  else if (ctx.skin === "Dry") reasons.push("Moisture-retaining for dry skin");
+
+  if (ctx.lifestyle === "Office indoor") reasons.push("Polished for indoor air-con");
+  if (ctx.lifestyle === "Outdoor commute") reasons.push("Sweat-handling for commutes");
+  if (ctx.lifestyle === "Active") reasons.push("Sport-grade wicking");
+
+  return reasons;
 }
 
 // ─── BY-OCCASION SUGGESTIONS ─────────────────────────────────────────────

@@ -46,14 +46,30 @@ export interface Fabric {
   warmthAffinity: Tone[];        // which seasons this is naturally well-suited to
   /** Higher = more sustainable / responsible. 1-5 */
   sustainability: number;
-  /** Skin-friendliness: useful for sensitive skin */
-  skinFriendly: number;          // 1-5
+  /** Skin-friendliness for normal-sensitive skin (chemical residues, weave smoothness). 1-5 */
+  skinFriendly: number;
+  /** Safety for sensitive / reactive skin. 1-5.
+   *  5 = ultra-smooth, no chemical finishes, dermatologist-recommended (silk, OEKO-TEX certified TENCEL, organic cotton).
+   *  1 = guaranteed flare trigger (wool, polyester fleece, acrylic, formaldehyde-treated easy-care cottons).
+   *  Internally still labelled "eczemaFriendly" so the column also serves anyone with eczema, contact dermatitis, or chronic flares. */
+  eczemaFriendly: number;
+  /** Suitability for dry skin (lacks oil/moisture, prone to itch). 1-5.
+   *  5 = retains skin moisture, smooth-on-skin (silk, modal, TENCEL, cotton-modal, brushed cottons).
+   *  1 = strips skin oils or causes friction itch (performance synthetics, acrylic, ramie). */
+  dryFriendly: number;
+  /** Thermal performance by body type. 1-5 each.
+   *  hotRunner: how comfortable a person who runs hot will be (favours airflow + wicking)
+   *  coldRunner: how comfortable a person who runs cold will be in air-con / layering contexts
+   *  Some fabrics (linen, TENCEL, merino) are thermo-regulating and score well on both. */
+  thermalFit: { hotRunner: number; coldRunner: number };
   /** Care notes one-liner */
   care: string;
   /** Label keywords to look for when shopping */
   labelKeywords: string[];
   /** One-sentence "why this fabric matters" */
   why: string;
+  /** Optional: explicit red-flag note (e.g. 100% acrylic, polyester fleece) per FABRIC_RESEARCH §2c */
+  redFlag?: string;
 }
 
 export const FABRICS: Fabric[] = [
@@ -75,6 +91,9 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "neutral", "cool"],
     sustainability: 5,
     skinFriendly: 5,
+    eczemaFriendly: 4,
+    dryFriendly: 3,
+    thermalFit: { hotRunner: 5, coldRunner: 2 },
     care: "Machine wash cold, air-dry, iron when slightly damp. Wrinkles are the look.",
     labelKeywords: ["100% Linen", "Pure Linen", "Linen blend"],
     why: "The fastest-wicking natural fibre. Wrinkles freely but that's the texture you're buying.",
@@ -96,6 +115,9 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "cool", "neutral"],
     sustainability: 3,
     skinFriendly: 5,
+    eczemaFriendly: 4,
+    dryFriendly: 4,
+    thermalFit: { hotRunner: 4, coldRunner: 3 },
     care: "Standard cotton care. Avoid hot dryer to preserve fibres.",
     labelKeywords: ["100% Cotton", "Cotton voile", "Cotton lawn"],
     why: "Workhorse for daily wear, breathable but not as wicking as linen.",
@@ -116,9 +138,12 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "cool", "neutral"],
     sustainability: 5,
     skinFriendly: 5,
+    eczemaFriendly: 5,
+    dryFriendly: 5,
+    thermalFit: { hotRunner: 4, coldRunner: 3 },
     care: "Same as cotton. Mild detergent preserves the no-residue benefit.",
     labelKeywords: ["GOTS Certified", "Organic Cotton", "OEKO-TEX Standard 100"],
-    why: "For sensitive skin, the cleanest cotton you can buy. Avoids formaldehyde finishes.",
+    why: "Dermatologist-recommended for eczema. No formaldehyde easy-care finishes, no pesticide residues.",
   },
   {
     slug: "hemp",
@@ -136,9 +161,12 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "neutral"],
     sustainability: 5,
     skinFriendly: 4,
+    eczemaFriendly: 4,
+    dryFriendly: 3,
+    thermalFit: { hotRunner: 5, coldRunner: 3 },
     care: "Machine wash, air-dry. Gets softer with every wash.",
     labelKeywords: ["100% Hemp", "Hemp blend"],
-    why: "More durable than cotton, more breathable than linen. The sustainable wardrobe anchor.",
+    why: "More durable than cotton, more breathable than linen, naturally antimicrobial. UPF 50+ sun protection.",
   },
   {
     slug: "ramie",
@@ -156,9 +184,12 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "neutral"],
     sustainability: 4,
     skinFriendly: 4,
+    eczemaFriendly: 3,
+    dryFriendly: 2,
+    thermalFit: { hotRunner: 5, coldRunner: 2 },
     care: "Dry-clean for structured pieces, hand-wash casual.",
     labelKeywords: ["Ramie", "Ramie blend"],
-    why: "Asian alternative to linen with a hint of luxury sheen.",
+    why: "Asian alternative to linen with a hint of luxury sheen. Crisper hand than linen.",
   },
 
   // ─── REGENERATED CELLULOSIC (excellent for tropics) ───────────────────
@@ -179,9 +210,12 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "cool", "neutral"],
     sustainability: 5,
     skinFriendly: 5,
+    eczemaFriendly: 5,
+    dryFriendly: 5,
+    thermalFit: { hotRunner: 5, coldRunner: 4 },
     care: "Gentle wash, hang to dry. Resists wrinkles.",
     labelKeywords: ["Tencel", "Lyocell", "TENCEL Lyocell"],
-    why: "The drape of silk with the breathability of cotton, and it's actually sustainable.",
+    why: "Drape of silk, breathability of cotton, naturally anti-bacterial. Closed-loop solvent process (95%+ recovery).",
   },
   {
     slug: "modal",
@@ -199,6 +233,9 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "cool", "neutral"],
     sustainability: 4,
     skinFriendly: 5,
+    eczemaFriendly: 5,
+    dryFriendly: 5,
+    thermalFit: { hotRunner: 4, coldRunner: 4 },
     care: "Easy machine wash, shape-keeping after many washes.",
     labelKeywords: ["Modal", "MicroModal"],
     why: "Twice as absorbent as cotton, drapes like a dream, almost never wrinkles.",
@@ -220,6 +257,9 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "cool", "neutral"],
     sustainability: 4,
     skinFriendly: 4,
+    eczemaFriendly: 4,
+    dryFriendly: 4,
+    thermalFit: { hotRunner: 4, coldRunner: 3 },
     care: "Cold wash, hang dry. Conventional viscose can pill, so look for EcoVero or LENZING brands.",
     labelKeywords: ["EcoVero", "LENZING Viscose", "Sustainable viscose"],
     why: "The drape of silk at a fraction of the price. Picky about care.",
@@ -240,9 +280,12 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "cool", "neutral"],
     sustainability: 4,
     skinFriendly: 5,
+    eczemaFriendly: 5,
+    dryFriendly: 5,
+    thermalFit: { hotRunner: 4, coldRunner: 4 },
     care: "Cold gentle wash. Look for closed-loop certification, conventional bamboo rayon is chemical-heavy.",
     labelKeywords: ["Bamboo Lyocell", "Closed-loop bamboo"],
-    why: "Bamboo plant grows fast and clean, but check certification, lots of bamboo fabric is just chemically processed rayon.",
+    why: "Closed-loop processed bamboo. Avoid generic '100% bamboo' which is chemical viscose under a greenwashed name.",
   },
 
   // ─── NATURAL ANIMAL ───────────────────────────────────────────────────
@@ -262,9 +305,12 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "cool", "neutral"],
     sustainability: 3,
     skinFriendly: 4,
+    eczemaFriendly: 5,
+    dryFriendly: 5,
+    thermalFit: { hotRunner: 4, coldRunner: 4 },
     care: "Hand-wash cold or dry-clean. Sweat residue stains, treat promptly.",
     labelKeywords: ["100% Silk", "Mulberry Silk", "Habotai", "Charmeuse"],
-    why: "Naturally temperature-regulating, but high-maintenance in tropical humidity.",
+    why: "Naturally thermoregulating (absorbs 30% of weight in moisture). Dermatologist-recommended for eczema thanks to its ultra-smooth surface.",
   },
   {
     slug: "wool",
@@ -282,9 +328,38 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "cool", "neutral"],
     sustainability: 4,
     skinFriendly: 3,
+    eczemaFriendly: 1,
+    dryFriendly: 2,
+    thermalFit: { hotRunner: 1, coldRunner: 5 },
     care: "Hand-wash or dry-clean.",
     labelKeywords: ["100% Wool", "Merino Wool", "Lambswool"],
-    why: "Best for air-con offices or travel to cooler climates. Skip for daily tropical wear.",
+    why: "Best for air-con offices, highlands, or travel to cooler climates. Merino (17-22 micron) is the fine, less-itchy option but still skips for eczema.",
+    redFlag: "Coarse wool is a classic eczema trigger. If you run cold but have sensitive skin, choose silk or fine merino over lambswool.",
+  },
+
+  {
+    slug: "merino-wool",
+    name: "Merino Wool",
+    alternativeNames: ["Fine Merino"],
+    category: "natural-animal",
+    source: "Fine sheep wool (17-22 micron, non-medullated)",
+    texture: "Fine, soft, not the itchy wool you remember",
+    tropicalFit: 3,
+    breathability: 4,
+    wicking: 5,
+    drape: 3,
+    wrinkle: 1,
+    durability: 4,
+    occasions: ["Office", "Travel"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 4,
+    skinFriendly: 4,
+    eczemaFriendly: 2,
+    dryFriendly: 3,
+    thermalFit: { hotRunner: 3, coldRunner: 5 },
+    care: "Often machine-washable cool; line dry. Hand-wash safest.",
+    labelKeywords: ["100% Merino", "Merino Wool", "Fine Merino"],
+    why: "The single best fabric for SEA office workers who freeze in air-con. Absorbs ~30% moisture without feeling damp; naturally odour-resistant for multi-day travel.",
   },
 
   // ─── SPECIALTY WEAVES (tropical-specific) ─────────────────────────────
@@ -304,9 +379,12 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "cool", "neutral"],
     sustainability: 4,
     skinFriendly: 5,
+    eczemaFriendly: 5,
+    dryFriendly: 4,
+    thermalFit: { hotRunner: 5, coldRunner: 2 },
     care: "Easy wash, no ironing required (the pucker IS the look).",
     labelKeywords: ["Seersucker", "Cotton seersucker"],
-    why: "Built for tropics. The puckered weave keeps fabric off your skin, instant cool.",
+    why: "Built for tropics. The puckered weave keeps fabric off your skin, instant cool. Gentle on flare-prone skin (less surface contact).",
   },
   {
     slug: "dobby-cotton",
@@ -324,6 +402,9 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "cool", "neutral"],
     sustainability: 3,
     skinFriendly: 5,
+    eczemaFriendly: 4,
+    dryFriendly: 4,
+    thermalFit: { hotRunner: 5, coldRunner: 2 },
     care: "Standard cotton care.",
     labelKeywords: ["Dobby weave", "Textured cotton"],
     why: "Small woven holes mean better airflow than regular cotton, lovely for office shirts.",
@@ -345,6 +426,9 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "cool", "neutral"],
     sustainability: 3,
     skinFriendly: 5,
+    eczemaFriendly: 4,
+    dryFriendly: 4,
+    thermalFit: { hotRunner: 5, coldRunner: 2 },
     care: "Gentle wash to preserve embroidery.",
     labelKeywords: ["Eyelet", "Broderie anglaise"],
     why: "Romantic look with literal ventilation built in.",
@@ -367,6 +451,9 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "cool", "neutral"],
     sustainability: 4,
     skinFriendly: 5,
+    eczemaFriendly: 5,
+    dryFriendly: 4,
+    thermalFit: { hotRunner: 5, coldRunner: 3 },
     care: "Gentle wash, hang dry. Best of both fibres.",
     labelKeywords: ["Linen-Tencel", "Linen-Lyocell blend"],
     why: "The fix for linen's main downside. Wrinkles less, drapes better, same wicking.",
@@ -387,9 +474,37 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "cool", "neutral"],
     sustainability: 3,
     skinFriendly: 5,
+    eczemaFriendly: 5,
+    dryFriendly: 5,
+    thermalFit: { hotRunner: 4, coldRunner: 3 },
     care: "Standard wash, shape-keeping.",
     labelKeywords: ["Cotton-Modal", "Cotton/Modal"],
     why: "More comfortable than pure cotton for daily wear, especially tees and base layers.",
+  },
+
+  {
+    slug: "cotton-linen",
+    name: "Cotton-Linen Blend",
+    alternativeNames: ["50/50 Linen-Cotton"],
+    category: "blend",
+    source: "Cotton + Linen mix (usually 50/50 or 70/30)",
+    texture: "Linen coolness with cotton's softer hand, fewer sharp creases",
+    tropicalFit: 5,
+    breathability: 5,
+    wicking: 5,
+    drape: 3,
+    wrinkle: 4,
+    durability: 4,
+    occasions: ["Office", "Weekend", "Going out", "Travel"],
+    warmthAffinity: ["warm", "cool", "neutral"],
+    sustainability: 4,
+    skinFriendly: 5,
+    eczemaFriendly: 4,
+    dryFriendly: 4,
+    thermalFit: { hotRunner: 5, coldRunner: 2 },
+    care: "Machine wash cold, air-dry. Less ironing than pure linen.",
+    labelKeywords: ["Cotton-Linen", "Linen-Cotton", "50/50 Linen Cotton"],
+    why: "The sweet spot for SEA tropical shirts. Linen's coolness with cotton's structure and reduced creasing.",
   },
 
   // ─── SYNTHETICS (mostly avoid) ───────────────────────────────────────
@@ -409,9 +524,13 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "cool", "neutral"],
     sustainability: 1,
     skinFriendly: 2,
-    care: "Easy wash but builds up odours.",
+    eczemaFriendly: 2,
+    dryFriendly: 2,
+    thermalFit: { hotRunner: 1, coldRunner: 3 },
+    care: "Easy wash but builds up odours. Polyester fleece sheds ~7,360 microfibres per litre per wash (Carney Almroth et al. 2018).",
     labelKeywords: ["Polyester", "PET"],
     why: "Cheap, wrinkle-proof, but traps body heat. Skip for tropical wear. Performance polyesters (Dri-FIT) are a different story.",
+    redFlag: "Polyester fleece is the worst microplastic shedder in your wardrobe. Heavy polyester anything traps sweat and bacteria.",
   },
   {
     slug: "performance-synthetic",
@@ -430,6 +549,9 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "cool", "neutral"],
     sustainability: 2,
     skinFriendly: 3,
+    eczemaFriendly: 2,
+    dryFriendly: 1,
+    thermalFit: { hotRunner: 3, coldRunner: 3 },
     care: "Cold wash, avoid fabric softener (clogs wicking).",
     labelKeywords: ["Dri-FIT", "Coolmax", "Wicking polyester", "Performance fabric"],
     why: "Right tool for sweaty workouts and humid outdoor commutes. Wrong tool for daily wear.",
@@ -450,6 +572,9 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "cool", "neutral"],
     sustainability: 1,
     skinFriendly: 3,
+    eczemaFriendly: 2,
+    dryFriendly: 2,
+    thermalFit: { hotRunner: 1, coldRunner: 3 },
     care: "Standard wash.",
     labelKeywords: ["Nylon", "Polyamide"],
     why: "Use only in technical gear (swimwear, rain shells). Avoid in everyday wear.",
@@ -470,9 +595,13 @@ export const FABRICS: Fabric[] = [
     warmthAffinity: ["warm", "cool", "neutral"],
     sustainability: 1,
     skinFriendly: 2,
-    care: "Standard wash, pills easily.",
+    eczemaFriendly: 1,
+    dryFriendly: 1,
+    thermalFit: { hotRunner: 1, coldRunner: 3 },
+    care: "Standard wash, pills easily within weeks (short-staple ~2-3 cN/tex).",
     labelKeywords: ["Acrylic"],
     why: "Worst fabric for tropics. Plastic that pretends to be wool. Skip entirely.",
+    redFlag: "100% acrylic knitwear and high-acrylic wool blends (30/70) pill heavily within weeks. Friction from pills can trigger eczema flares.",
   },
 ];
 
