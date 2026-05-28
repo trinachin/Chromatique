@@ -339,7 +339,7 @@ export default function AnalyzePage() {
             size="lg"
             className="w-full mb-3"
           >
-            Take 2 more photos →
+            Take more photos →
           </Button>
           <Button
             onClick={useFirstAnyway}
