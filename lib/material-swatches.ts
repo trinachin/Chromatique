@@ -232,22 +232,79 @@ const HAIR: Record<string, string> = {
   // Copper / auburn
   "Copper":                      "#A45026",
   "Rich copper":                 "#9A4820",
+  "Bright copper":               "#C26034",
+  "Light copper":                "#C97048",
+  "Warm copper":                 "#B05528",
+  "Cool copper":                 "#8E4424",
   "Copper highlights":           "#B45A2A",
   "Rich auburn":                 "#7C3018",
+  "Auburn":                      "#7A2E16",
+  "Soft auburn":                 "#8C4022",
   "Deep auburn":                 "#642614",
   "Dark auburn":                 "#5A1F10",
   "Vibrant warm tones":          "#8E3E1A",
+  "Red":                         "#A53420",
+  "Red-brown":                   "#7E3220",
 
   // Blacks
+  "Black":                       "#0F0F0F",
+  "Soft black":                  "#1A1A1A",
+  "Cool black":                  "#0A0E14",
+  "Warm black":                  "#1A140E",
   "Blue-black":                  "#0E141C",
   "True black":                  "#080808",
   "Cool espresso":               "#1F1812",
   "Espresso with warm tones":    "#241A12",
+  "Espresso":                    "#211812",
   "Deep warm brown":             "#2A1810",
   "Warm tones":                  "#6B3F1F",
+
+  // Ash / cool tones (commonly returned by the AI as generic categories)
+  "Cool ash tones":              "#7A766E",
+  "Cool ash":                    "#7A766E",
+  "Warm ash tones":              "#8A7E6E",
+  "Ash tones":                   "#7E786C",
+  "Cool tones":                  "#544A40",
+  "Soft cool tones":             "#6A5E54",
+
+  // Greys
+  "Salt and pepper":             "#74706A",
+  "Silver":                      "#C8C6C0",
+  "Grey":                        "#9A9690",
+  "Charcoal":                    "#3A3632",
 };
 const HAIR_DEFAULT = "#5C4030";
 
+/** Fuzzy fallback: if the exact label isn't in the map, look for partial matches
+ *  by keyword so AI-generated labels like "Bright warm copper" still resolve to
+ *  something sensible (copper) instead of defaulting to medium brown. */
+const HAIR_KEYWORD_FALLBACKS: Array<[RegExp, string]> = [
+  [/black/i,                "#0F0F0F"],
+  [/espresso/i,             "#211812"],
+  [/silver|grey|gray/i,     "#9A9690"],
+  [/platinum/i,             "#D5D3CE"],
+  [/copper|red/i,           "#A45026"],
+  [/auburn/i,               "#7C3018"],
+  [/honey/i,                "#C99450"],
+  [/strawberry/i,           "#C28560"],
+  [/golden blonde|warm blonde/i, "#D4A958"],
+  [/ash blonde/i,           "#B8AC92"],
+  [/blonde/i,               "#C9A55E"],
+  [/chestnut/i,             "#7A5235"],
+  [/mushroom|taupe/i,       "#8A7866"],
+  [/ash/i,                  "#7A766E"],
+  [/light .*brown/i,        "#8C6240"],
+  [/dark .*brown|deep .*brown/i, "#3A2A1E"],
+  [/golden .*brown/i,       "#6E5238"],
+  [/cool .*brown/i,         "#4E3C30"],
+  [/warm .*brown/i,         "#5E4030"],
+  [/brown/i,                "#5C4030"],
+];
+
 export function getHairHex(label: string): string {
-  return HAIR[label] ?? HAIR_DEFAULT;
+  if (HAIR[label]) return HAIR[label];
+  for (const [pattern, hex] of HAIR_KEYWORD_FALLBACKS) {
+    if (pattern.test(label)) return hex;
+  }
+  return HAIR_DEFAULT;
 }

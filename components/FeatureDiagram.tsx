@@ -15,20 +15,42 @@ interface DiagramProps {
 }
 
 // ─── Blush placement per face shape (ADD_RESEARCH §3f) ─────────────────────
+// Backed by ChatGPT-generated editorial PNGs in /public/generated/features/.
+// Falls back to the legacy SVG diagram if a face-shape's PNG is missing.
+
+const BLUSH_IMAGES: Partial<Record<FaceShape, string>> = {
+  "Oval":     "/generated/features/blush-oval.png",
+  "Round":    "/generated/features/blush-round.png",
+  "Square":   "/generated/features/blush-square.png",
+  "Heart":    "/generated/features/blush-heart.png",
+  "Diamond":  "/generated/features/blush-diamond.png",
+  "Oblong":   "/generated/features/blush-oblong.png",
+  "Triangle": "/generated/features/blush-triangle.png",
+};
 
 export function BlushDiagram({ faceShape, className }: { faceShape: FaceShape } & DiagramProps) {
-  // Simple face oval + dashed accent indicating placement direction
+  const src = BLUSH_IMAGES[faceShape];
+
+  // Photo-based illustration (preferred)
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt={`${faceShape} face shape with blush placement`}
+        className={className}
+      />
+    );
+  }
+
+  // Fallback: legacy SVG diagram (used for Diamond until PNG is added)
   const placement = BLUSH_PATHS[faceShape] ?? BLUSH_PATHS.Oval;
   return (
     <svg viewBox="0 0 100 110" className={className} aria-hidden="true">
-      {/* Face oval (skin) */}
       <ellipse cx="50" cy="55" rx="32" ry="42" fill={SKIN} stroke={STROKE} strokeWidth="1" />
-      {/* Eyes */}
       <ellipse cx="38" cy="48" rx="3" ry="1.5" fill={STROKE} />
       <ellipse cx="62" cy="48" rx="3" ry="1.5" fill={STROKE} />
-      {/* Lips */}
       <path d="M 42 78 Q 50 82 58 78" stroke={STROKE} strokeWidth="1" fill="none" />
-      {/* Blush placement guides — dashed accent on both cheeks */}
       <path d={placement.left} stroke={ACCENT} strokeWidth="2" fill="none" strokeDasharray="2 1.5" strokeLinecap="round" />
       <path d={placement.right} stroke={ACCENT} strokeWidth="2" fill="none" strokeDasharray="2 1.5" strokeLinecap="round" />
     </svg>
@@ -53,18 +75,45 @@ const BLUSH_PATHS: Record<FaceShape, { left: string; right: string }> = {
 };
 
 // ─── Eye + eyeliner per eye shape (ADD_RESEARCH §3a) ──────────────────────
+// Now backed by editorial illustration PNGs generated via ChatGPT and saved
+// to /public/generated/features/. Each eye shape maps to one PNG. Falls back
+// to the legacy SVG render below if a PNG is missing.
+
+const EYE_IMAGES: Partial<Record<EyeShape, string>> = {
+  "Almond":              "/generated/features/eye-almond.png",
+  "Round":               "/generated/features/eye-round.png",
+  "Monolid":             "/generated/features/eye-monolid.png",
+  "Hooded monolid":      "/generated/features/eye-hooded-monolid.png",
+  "Parallel double-lid": "/generated/features/eye-parallel-double-lid.png",
+  "Outer double-lid":    "/generated/features/eye-outer-double-lid.png",
+  "Hooded":              "/generated/features/eye-hooded.png",
+  "Downturned":          "/generated/features/eye-downturned.png",
+  "Upturned":            "/generated/features/eye-upturned.png",
+  "Deep-set":            "/generated/features/eye-deep-set.png",
+};
 
 export function EyelinerDiagram({ eyeShape, className }: { eyeShape: EyeShape } & DiagramProps) {
+  const src = EYE_IMAGES[eyeShape];
+
+  // Photo-based illustration (preferred)
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt={`${eyeShape} eye shape with eyeliner technique`}
+        className={className}
+      />
+    );
+  }
+
+  // Fallback: legacy SVG line drawing if an image is missing for this shape
   const lines = EYE_PATHS[eyeShape] ?? EYE_PATHS.Almond;
   return (
     <svg viewBox="0 0 100 50" className={className} aria-hidden="true">
-      {/* Brow */}
       <path d={lines.brow} stroke={STROKE} strokeWidth="1.5" fill="none" strokeLinecap="round" />
-      {/* Eye outline (upper + lower lashline) */}
       <path d={lines.eyeOutline} stroke={STROKE} strokeWidth="1" fill="white" />
-      {/* Iris */}
       <circle cx={lines.irisX} cy={lines.irisY} r={lines.irisR} fill={STROKE} />
-      {/* Eyeliner (accent stroke + wing) */}
       <path d={lines.liner} stroke={ACCENT} strokeWidth="2.5" fill="none" strokeLinecap="round" />
     </svg>
   );

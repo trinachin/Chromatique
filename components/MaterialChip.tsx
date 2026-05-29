@@ -30,15 +30,14 @@ export function MaterialChip({ label, category, muted = false }: MaterialChipPro
         aria-hidden="true"
         className="w-16 h-16 rounded-xl border border-black/10 shadow-sm relative overflow-hidden"
         style={{ background }}
-      >
-        {/* Avoid stripe overlay (matches /result "Colours to avoid" pattern) */}
-        {muted && (
-          <span className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(0,0,0,0.18)_4px,rgba(0,0,0,0.18)_5px)] pointer-events-none" />
-        )}
-      </div>
+      />
       <span
         className={cn(
           "text-xs font-medium text-center leading-tight",
+          // Muted = slightly lighter label colour only. Swatch shows the true
+          // color so "Bright copper" actually reads as copper, "Black" reads
+          // as black, etc. The "LESS FLATTERING" section header (red) is what
+          // communicates the avoid context.
           muted ? "text-[var(--c-ink-soft)]" : "text-[var(--c-ink)]"
         )}
       >

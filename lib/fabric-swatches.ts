@@ -1,8 +1,21 @@
-// Visual swatch gradients for each fabric. Renders inside a small square in
-// the FabricGuideSection. Designed to evoke the texture without literal
-// photography: subtle weave-like gradients keyed to fabric category.
+// Visual swatch backgrounds for each fabric. Renders inside a small square in
+// the FabricGuideSection. Primary path: AI-generated macro fabric photographs
+// at /generated/fabrics/<slug>.jpg. Fallback path: subtle weave-like CSS
+// gradients keyed to fabric category, used when an image is unavailable.
 
 import type { FabricCategory } from "./fabrics";
+
+// Slugs with shipped fabric photo swatches. Adding a fabric here without
+// adding the matching JPG will produce a broken image, so keep this list
+// in lockstep with /public/generated/fabrics/.
+const FABRIC_IMAGES = new Set<string>([
+  "linen", "lightweight-cotton", "organic-cotton", "hemp", "ramie",
+  "tencel-lyocell", "modal", "ecovero-viscose", "bamboo-lyocell",
+  "silk", "wool", "merino-wool",
+  "seersucker", "dobby-cotton", "eyelet-cotton",
+  "linen-tencel", "cotton-modal", "cotton-linen",
+  "polyester", "performance-synthetic", "nylon", "acrylic",
+]);
 
 /** Per-category base palette + texture treatment. */
 const CATEGORY_PALETTE: Record<FabricCategory, { from: string; to: string; weave: "linen" | "smooth" | "knit" | "ribbed" | "specialty" }> = {
@@ -38,8 +51,13 @@ const PER_FABRIC: Record<string, { from: string; to: string }> = {
   acrylic:              { from: "#CCC8C4", to: "#807A74" },
 };
 
-/** Returns a CSS background for a fabric chip, including a subtle "weave" overlay. */
+/** Returns a CSS background for a fabric chip. Uses a real macro photograph
+ *  swatch when one is shipped, otherwise falls back to a category gradient. */
 export function getFabricBackground(slug: string, category: FabricCategory): string {
+  if (FABRIC_IMAGES.has(slug)) {
+    return `url('/generated/fabrics/${slug}.jpg') center/cover no-repeat`;
+  }
+
   const colors = PER_FABRIC[slug] ?? CATEGORY_PALETTE[category];
   const weave = CATEGORY_PALETTE[category].weave;
 
@@ -49,7 +67,6 @@ export function getFabricBackground(slug: string, category: FabricCategory): str
   // Subtle texture overlay per weave type
   let texture = "";
   if (weave === "linen") {
-    // Cross-hatched threads
     texture = `, repeating-linear-gradient(90deg, transparent 0px, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 3px), repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 3px)`;
   } else if (weave === "ribbed") {
     texture = `, repeating-linear-gradient(90deg, transparent 0px, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px)`;
