@@ -71,23 +71,21 @@ export default function FabricGuidePage() {
             On this page
           </p>
           <div className="flex flex-wrap gap-1.5 text-xs">
-            <TocLink href="#about-you" label="01 · About you" />
-            <TocLink href="#your-fabrics" label="02 · Your fabrics" />
-            <TocLink href="#check-label" label="03 · Check a label" />
+            <TocLink href="#check-label" label="01 · Check a label" />
+            <TocLink href="#about-you" label="02 · About you" />
+            <TocLink href="#your-fabrics" label="03 · Your fabrics" />
             <TocLink href="#learn" label="04 · Learn the rules" />
           </div>
         </nav>
 
-        {/* The guide itself (sections 01, 02, 04) */}
-        <FabricGuideSection result={result ?? undefined} />
-
-        {/* Composition Checker (section 03) */}
+        {/* Composition Checker — moved to top so a user mid-shop gets an
+            instant verdict without scrolling past the personalisation flow. */}
         <section
           id="check-label"
           className="bg-[var(--c-surface)] rounded-2xl p-5 sm:p-6 border border-[var(--c-line)] space-y-4 scroll-mt-20"
         >
           <div className="flex items-center gap-3">
-            <span className="font-display text-2xl font-bold text-[var(--c-line)] leading-none">03</span>
+            <span className="font-display text-2xl font-bold text-[var(--c-line)] leading-none">01</span>
             <div className="flex items-center gap-2">
               <span className="text-[var(--c-accent)]"><ScanSearch className="w-4 h-4" /></span>
               <h2 className="font-display text-lg sm:text-xl font-semibold text-[var(--c-ink)]">
@@ -100,6 +98,9 @@ export default function FabricGuidePage() {
           </p>
           <CompositionChecker />
         </section>
+
+        {/* The personalised guide (sections 02, 03, 04) */}
+        <FabricGuideSection result={result ?? undefined} />
 
         {/* If they haven't done analysis yet, prompt them */}
         {!result && (

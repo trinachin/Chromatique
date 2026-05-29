@@ -110,7 +110,7 @@ export function FabricGuideSection({ result }: Props) {
         id="about-you"
         className="bg-[var(--c-surface)] rounded-2xl p-5 sm:p-6 border border-[var(--c-line)] space-y-4 scroll-mt-20"
       >
-        <StepHeader number="01" icon={<HeartPulse className="w-4 h-4" />} title="Tell us about you" />
+        <StepHeader number="02" icon={<HeartPulse className="w-4 h-4" />} title="Tell us about you" />
         <div className="space-y-3">
           <PickerRow
             label="Climate"
@@ -154,7 +154,7 @@ export function FabricGuideSection({ result }: Props) {
         id="your-fabrics"
         className="bg-[var(--c-surface)] rounded-2xl p-5 sm:p-6 border border-[var(--c-line)] space-y-5 scroll-mt-20"
       >
-        <StepHeader number="02" icon={<Leaf className="w-4 h-4" />} title="What works for you" />
+        <StepHeader number="03" icon={<Leaf className="w-4 h-4" />} title="What works for you" />
 
         {/* Personal reason chips */}
         {recommendation.personalReasons.length > 0 && (
@@ -262,12 +262,30 @@ export function FabricGuideSection({ result }: Props) {
         </div>
       </section>
 
+      {/* ─── Save card — sits between "What works" and "Learn" so users can
+            export their personalised picks before diving into the reference. */}
+      <section className="bg-[var(--c-surface)] rounded-2xl p-5 sm:p-6 border border-[var(--c-line)]">
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          variant="primary"
+          size="md"
+          className="w-full gap-2"
+        >
+          <Download className="w-4 h-4" />
+          {saving ? "Creating your card…" : saved ? "Saved!" : "Save my fabric card"}
+        </Button>
+        <p className="text-[11px] text-[var(--c-ink-soft)]/70 text-center mt-2">
+          A shareable infographic with your anchors, skips, and care notes.
+        </p>
+      </section>
+
       {/* ─── STEP 3: Learn — encyclopedia + tips ───────────────────────── */}
       <section
         id="learn"
         className="bg-[var(--c-surface)] rounded-2xl p-5 sm:p-6 border border-[var(--c-line)] space-y-5 scroll-mt-20"
       >
-        <StepHeader number="03" icon={<Sparkles className="w-4 h-4" />} title="Learn the rules" />
+        <StepHeader number="04" icon={<Sparkles className="w-4 h-4" />} title="Learn the rules" />
 
         {/* Shopping notes */}
         <div>
@@ -329,22 +347,6 @@ export function FabricGuideSection({ result }: Props) {
         </div>
       </section>
 
-      {/* ─── Save card ──────────────────────────────────────────────── */}
-      <section className="bg-[var(--c-surface)] rounded-2xl p-5 sm:p-6 border border-[var(--c-line)]">
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          variant="primary"
-          size="md"
-          className="w-full gap-2"
-        >
-          <Download className="w-4 h-4" />
-          {saving ? "Creating your card…" : saved ? "Saved!" : "Save my fabric card"}
-        </Button>
-        <p className="text-[11px] text-[var(--c-ink-soft)]/70 text-center mt-2">
-          A shareable infographic with your anchors, skips, and care notes.
-        </p>
-      </section>
     </div>
   );
 }
